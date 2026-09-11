@@ -17,9 +17,7 @@ export class CustomerService {
 
   getCustomerById(id: number): Observable<CustomerDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<CustomerDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.customers.byId(id)}`).pipe(
-        catchError(() => of(this.mockData.customers.find(c => (c.id ?? c.customerId) === id) || this.mockData.customers[0]))
-      );
+      return this.http.get<CustomerDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.customers.byId(id)}`);
     }
     return of(this.mockData.customers.find(c => (c.id ?? c.customerId) === id) || this.mockData.customers[0]);
   }
@@ -44,9 +42,7 @@ export class CustomerService {
     }
 
     if (!API_CONFIG.useMockData) {
-      return this.http.put<CustomerDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.customers.update(id)}`, request).pipe(
-        catchError(() => of(this.updateMockCustomer(id, request)))
-      );
+      return this.http.put<CustomerDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.customers.update(id)}`, request);
     }
     return of(this.updateMockCustomer(id, request));
   }
@@ -58,9 +54,7 @@ export class CustomerService {
         .set('pageSize', pageSize.toString());
       if (search) params = params.set('search', search);
 
-      return this.http.get<PagedResult<CustomerSummaryDto>>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.customers.search}`, { params }).pipe(
-        catchError(() => of(this.getMockCustomers(search, page, pageSize)))
-      );
+      return this.http.get<PagedResult<CustomerSummaryDto>>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.customers.search}`, { params });
     }
     return of(this.getMockCustomers(search, page, pageSize));
   }
@@ -74,13 +68,7 @@ export class CustomerService {
 
   deactivateCustomer(id: number): Observable<void> {
     if (!API_CONFIG.useMockData) {
-      return this.http.delete<void>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.customers.deactivate(id)}`).pipe(
-        catchError(() => {
-          const cust = this.mockData.customers.find(c => (c.id ?? c.customerId) === id);
-          if (cust) cust.isActive = false;
-          return of(void 0);
-        })
-      );
+      return this.http.delete<void>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.customers.deactivate(id)}`);
     }
     const cust = this.mockData.customers.find(c => (c.id ?? c.customerId) === id);
     if (cust) cust.isActive = false;

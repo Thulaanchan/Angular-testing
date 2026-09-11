@@ -12,6 +12,14 @@
     </a>
   </div>
 
+  <!-- Alerts -->
+  @if (errorMessage) {
+    <app-alert-banner type="error" [message]="errorMessage" [dismissible]="true" (dismissed)="errorMessage = ''"></app-alert-banner>
+  }
+  @if (successMessage) {
+    <app-alert-banner type="success" [message]="successMessage" [dismissible]="true" (dismissed)="successMessage = ''"></app-alert-banner>
+  }
+
   <!-- Search Bar -->
   <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between">
     <div class="relative w-full max-w-sm">
@@ -52,16 +60,16 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            @for (cat of filteredCategories; track cat.categoryId) {
+            @for (cat of filteredCategories; track cat.id) {
               <tr class="hover:bg-slate-50/50 transition cursor-pointer" (click)="viewDetails(cat)">
                 <td class="py-3.5 px-4">
                   <div class="font-bold text-slate-900">{{ cat.name }}</div>
-                  <span class="text-[11px] text-slate-400 font-mono">#CAT-{{ cat.categoryId }}</span>
+                  <span class="text-[11px] text-slate-400 font-mono">#CAT-{{ cat.id }}</span>
                 </td>
-                <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate">{{ cat.description }}</td>
-                <td class="py-3.5 px-4 text-center font-bold text-slate-800">{{ cat.activeEventCount || cat.eventCount || 2 }}</td>
+                <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate">{{ cat.description || '—' }}</td>
+                <td class="py-3.5 px-4 text-center font-bold text-slate-800">{{ cat.eventCount ?? cat.eventsCount ?? 0 }}</td>
                 <td class="py-3.5 px-4 text-center">
-                  <app-status-badge [status]="cat.isActive ? 'Active' : 'Inactive'" size="xs"></app-status-badge>
+                  <app-status-badge [status]="(cat.isActive !== false) ? 'Active' : 'Inactive'" size="xs"></app-status-badge>
                 </td>
                 <td class="py-3.5 px-4 text-right">
                   <div class="flex items-center justify-end gap-2" (click)="$event.stopPropagation()">
@@ -72,10 +80,16 @@
                       Details
                     </button>
                     <a
-                      [routerLink]="['/admin/categories', cat.categoryId, 'edit']"
+                      [routerLink]="['/admin/categories', cat.id, 'edit']"
                       class="px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition">
                       Edit
                     </a>
+                    <button
+                      type="button"
+                      (click)="deleteCategory(cat)"
+                      class="px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition">
+                      Delete
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -97,11 +111,11 @@
       <div class="space-y-4 text-xs">
         <div>
           <span class="text-slate-400 block uppercase text-[10px] mb-1">Description</span>
-          <p class="text-slate-700 leading-relaxed">{{ selectedCategory.description }}</p>
+          <p class="text-slate-700 leading-relaxed">{{ selectedCategory.description || 'No description provided.' }}</p>
         </div>
         <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
           <span class="text-slate-500">Events Catalog Count</span>
-          <span class="font-bold text-slate-900 text-sm">{{ selectedCategory.activeEventCount || 2 }} Events</span>
+          <span class="font-bold text-slate-900 text-sm">{{ selectedCategory.eventCount ?? selectedCategory.eventsCount ?? 0 }} Events</span>
         </div>
       </div>
     }

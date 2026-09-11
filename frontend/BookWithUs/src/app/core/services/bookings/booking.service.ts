@@ -7,6 +7,7 @@ import { API_ENDPOINTS } from '../../constants/api-endpoints.constants';
 import { BookingDto, BookingSummaryDto, CancelBookingResponseDto, CreateBookingRequestDto } from '../../models/bookings/booking.model';
 import { MockDataService } from '../mock-data.service';
 import { BookingStatus } from '../../models/bookings/booking-status.model';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -14,56 +15,48 @@ import { BookingStatus } from '../../models/bookings/booking-status.model';
 export class BookingService {
   private http = inject(HttpClient);
   private mockData = inject(MockDataService);
+  private authService = inject(AuthService);
 
   createBooking(request: CreateBookingRequestDto): Observable<BookingDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.post<BookingDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.base}`, request).pipe(
-        catchError(() => of(this.createMockBooking(request)))
-      );
+      return this.http.post<BookingDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.base}`, request);
     }
     return of(this.createMockBooking(request));
   }
 
   getBookingById(id: number): Observable<BookingDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<BookingDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.byId(id)}`).pipe(
-        catchError(() => {
-          const booking = this.mockData.bookings.find(b => b.bookingId === id) || this.mockData.bookings[0];
-          return of(booking);
-        })
-      );
+      return this.http.get<BookingDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.byId(id)}`);
     }
     const booking = this.mockData.bookings.find(b => b.bookingId === id) || this.mockData.bookings[0];
     return of(booking);
   }
 
-  getCustomerBookings(customerId: number = 1): Observable<BookingSummaryDto[]> {
+  getCustomerBookings(customerId?: number): Observable<BookingSummaryDto[]> {
+    const targetId = customerId || this.authService.getCustomerId() || 1;
     if (!API_CONFIG.useMockData) {
-      return this.http.get<BookingSummaryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.byCustomer(customerId)}`).pipe(
-        catchError(() => of(this.getMockSummaries(customerId)))
-      );
+      return this.http.get<BookingSummaryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.byCustomer(targetId)}`);
     }
-    return of(this.getMockSummaries(customerId));
+    return of(this.getMockSummaries(targetId));
   }
 
   getEventBookings(eventId: number): Observable<BookingSummaryDto[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<BookingSummaryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.byEvent(eventId)}`).pipe(
-        catchError(() => of(this.getMockEventBookings(eventId)))
-      );
+      return this.http.get<BookingSummaryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.byEvent(eventId)}`);
     }
     return of(this.getMockEventBookings(eventId));
   }
 
   getAllBookings(): Observable<BookingSummaryDto[]> {
+    if (!API_CONFIG.useMockData) {
+      return this.http.get<BookingSummaryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.base}`);
+    }
     return of(this.mockData.bookings.map(b => this.toSummary(b)));
   }
 
   cancelBooking(id: number): Observable<CancelBookingResponseDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.delete<CancelBookingResponseDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.cancel(id)}`).pipe(
-        catchError(() => of(this.cancelMockBooking(id)))
-      );
+      return this.http.delete<CancelBookingResponseDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.bookings.cancel(id)}`);
     }
     return of(this.cancelMockBooking(id));
   }

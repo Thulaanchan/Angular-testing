@@ -1,0 +1,132 @@
+<div class="space-y-4">
+  <!-- Legend & Zoom Toolbar -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
+    <div class="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600">
+      <div class="flex items-center gap-1.5">
+        <span class="w-4 h-4 rounded-md bg-slate-700 border border-slate-600"></span>
+        <span>Available</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-4 h-4 rounded-md bg-purple-600 border border-purple-700 shadow-xs"></span>
+        <span class="font-bold text-purple-700">Selected</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-4 h-4 rounded-md bg-amber-500/40 border border-amber-500"></span>
+        <span>Held (15m)</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-4 h-4 rounded-md bg-slate-800 border border-slate-700 opacity-40"></span>
+        <span class="text-slate-400">Booked</span>
+      </div>
+      <div class="h-4 w-px bg-slate-200 hidden sm:block"></div>
+      <div class="flex items-center gap-2 text-[11px]">
+        <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 font-semibold">VIP {{ 20000 | currency:'LKR':'symbol':'1.0-0' }}</span>
+        <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">Platinum {{ 15000 | currency:'LKR':'symbol':'1.0-0' }}</span>
+        <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold">Gold {{ 12500 | currency:'LKR':'symbol':'1.0-0' }}</span>
+        <span class="px-2 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200 font-semibold">Silver {{ 10000 | currency:'LKR':'symbol':'1.0-0' }}</span>
+      </div>
+    </div>
+
+    <!-- Zoom Controls -->
+    <div class="flex items-center gap-1">
+      <button
+        type="button"
+        (click)="zoomOut()"
+        class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
+        title="Zoom Out">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+      </button>
+      <button
+        type="button"
+        (click)="resetZoom()"
+        class="px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition"
+        title="Reset Zoom">
+        {{ (zoomLevel * 100) | number:'1.0-0' }}%
+      </button>
+      <button
+        type="button"
+        (click)="zoomIn()"
+        class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition"
+        title="Zoom In">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Arena Layout Container -->
+  <div class="bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-800 overflow-x-auto min-h-[480px] flex flex-col items-center justify-start text-white">
+    <!-- Stage Visual Banner -->
+    <div class="w-full max-w-xl mb-8">
+      <div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 text-white py-2.5 px-6 rounded-2xl text-center shadow-lg shadow-purple-900/50 border border-purple-400/40">
+        <span class="text-xs font-black uppercase tracking-widest">STAGE &bull; PERFORMANCE AREA</span>
+      </div>
+      <div class="w-3/4 h-2 bg-purple-500/30 rounded-full mx-auto mt-2 blur-xs"></div>
+    </div>
+
+    @if (isLoading) {
+      <div class="py-20">
+        <app-loading-spinner message="Loading arena seating layout..." color="text-purple-400"></app-loading-spinner>
+      </div>
+    } @else if (errorMessage) {
+      <div class="py-16 text-center space-y-3">
+        <p class="text-rose-400 text-sm font-semibold">{{ errorMessage }}</p>
+        <button
+          type="button"
+          (click)="loadSeats(eventId)"
+          class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-xl transition">
+          Retry Loading Seats
+        </button>
+      </div>
+    } @else if (sections.length === 0) {
+      <div class="py-16 text-center text-slate-400 text-sm">
+        No seats currently configured for this event.
+      </div>
+    } @else {
+      <!-- Scalable Seating Grid -->
+      <div
+        class="space-y-6 transition-transform duration-200 origin-top pb-6 w-full flex flex-col items-center"
+        [ngStyle]="{ 'transform': 'scale(' + zoomLevel + ')' }">
+
+        @for (sec of sections; track sec.name) {
+          <div class="w-full max-w-2xl bg-slate-800/60 rounded-2xl p-4 border border-slate-700/60">
+            <div class="flex items-center justify-between mb-3 text-xs">
+              <span class="font-bold text-slate-200">{{ sec.name }} ({{ sec.tier }} Tier)</span>
+              <span class="text-slate-400">Available: {{ sec.seats.length }}</span>
+            </div>
+
+            <!-- Child Seat Items Grid -->
+            <div class="flex flex-wrap gap-2 justify-center">
+              @for (seat of sec.seats; track seat.id) {
+                <app-seat-item
+                  [seat]="seat"
+                  [isSelected]="isSeatSelected(seat.id)"
+                  (seatClick)="onSeatClick($event)"
+                  (seatHover)="hoveredSeat = $event">
+                </app-seat-item>
+              }
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Hover Tooltip Bar -->
+      <div class="h-6 mt-2 text-xs text-slate-400">
+        @if (hoveredSeat) {
+          <span class="font-mono text-purple-300 font-bold">Seat {{ hoveredSeat.seatCode | seatLabel }}</span> &bull;
+          <span>{{ hoveredSeat.sectionName }} (Row {{ hoveredSeat.rowLabel }})</span> &bull;
+          <span>{{ hoveredSeat.adultPrice | currency:'LKR':'symbol':'1.2-2' }}</span> &bull;
+          <span
+            [ngClass]="{
+              'text-emerald-400': hoveredSeat.status === 'Available',
+              'text-amber-400': hoveredSeat.status === 'Held',
+              'text-slate-400': hoveredSeat.status === 'Booked' || hoveredSeat.status === 'Occupied'
+            }">
+            {{ hoveredSeat.status }}
+          </span>
+        } @else {
+          <span>Hover over a seat for details &bull; Click to select/deselect</span>
+        }
+      </div>
+    }
+  </div>
+</div>

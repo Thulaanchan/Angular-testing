@@ -48,6 +48,11 @@ export class BookingConfirmationPageComponent implements OnInit {
     });
   }
 
+  getSeatSummary(seats?: any[]): string {
+    if (!seats || seats.length === 0) return 'None';
+    return seats.map(s => s.seatCode).join(', ');
+  }
+
   printReceipt(): void {
     window.print();
   }

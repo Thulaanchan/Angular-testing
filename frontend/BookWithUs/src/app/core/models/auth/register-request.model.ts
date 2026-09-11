@@ -1,10 +1,10 @@
 export interface RegisterRequestDto {
-  firstName?: string;
-  lastName?: string;
+  firstName: string;
+  lastName: string;
   fullName?: string;
   email: string;
-  phone?: string;
-  phoneNumber?: string;
+  phone?: string | null;
+  phoneNumber?: string | null;
   password: string;
-  confirmPassword?: string;
+  confirmPassword: string;
 }

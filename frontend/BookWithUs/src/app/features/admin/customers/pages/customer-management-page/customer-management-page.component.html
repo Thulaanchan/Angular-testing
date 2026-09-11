@@ -61,6 +61,10 @@
     <div class="py-20">
       <app-loading-spinner message="Loading customer directory..."></app-loading-spinner>
     </div>
+  } @else if (errorMessage) {
+    <div class="py-8">
+      <app-alert-banner type="error" [message]="errorMessage"></app-alert-banner>
+    </div>
   } @else if (customers.length === 0) {
     <app-empty-state
       title="No customers found"
@@ -74,9 +78,9 @@
             <tr>
               <th class="py-3.5 px-4">Customer</th>
               <th class="py-3.5 px-4">Contact</th>
-              <th class="py-3.5 px-4">Joined Date</th>
+              <th class="py-3.5 px-4 text-center">Verification</th>
               <th class="py-3.5 px-4 text-center">Bookings</th>
-              <th class="py-3.5 px-4 text-center">Status</th>
+              <th class="py-3.5 px-4 text-center">Account Status</th>
               <th class="py-3.5 px-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -86,26 +90,36 @@
                 <td class="py-3.5 px-4">
                   <div class="flex items-center gap-3">
                     <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold text-xs flex items-center justify-center shrink-0">
-                      {{ (cust.fullName || 'CU').substring(0, 2).toUpperCase() }}
+                      {{ (cust.firstName || 'C').substring(0, 1) }}{{ (cust.lastName || '').substring(0, 1) }}
                     </div>
                     <div>
-                      <span class="font-bold text-slate-900 block">{{ cust.fullName }}</span>
+                      <span class="font-bold text-slate-900 block">{{ cust.firstName }} {{ cust.lastName }}</span>
                       <span class="text-[11px] text-slate-400">ID: #CUST-{{ cust.customerId }}</span>
                     </div>
                   </div>
                 </td>
                 <td class="py-3.5 px-4 text-slate-600">
-                  <span class="block">{{ cust.email }}</span>
-                  <span class="text-[11px] text-slate-400">{{ cust.phoneNumber }}</span>
+                  <span class="block font-medium">{{ cust.email }}</span>
+                  <span class="text-[11px] text-slate-400">{{ cust.phone || cust.phoneNumber || 'No phone' }}</span>
                 </td>
-                <td class="py-3.5 px-4 text-slate-500">{{ cust.registeredDate | date:'mediumDate' }}</td>
+                <td class="py-3.5 px-4 text-center">
+                  @if (cust.isEmailVerified) {
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-700">
+                      Verified
+                    </span>
+                  } @else {
+                    <span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-100 text-amber-700">
+                      Unverified
+                    </span>
+                  }
+                </td>
                 <td class="py-3.5 px-4 text-center">
                   <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
-                    {{ cust.totalBookings }}
+                    {{ cust.bookingCount || 0 }}
                   </span>
                 </td>
                 <td class="py-3.5 px-4 text-center">
-                  <app-status-badge [status]="cust.status" size="xs"></app-status-badge>
+                  <app-status-badge [status]="cust.isActive ? 'Active' : 'Inactive'" size="xs"></app-status-badge>
                 </td>
                 <td class="py-3.5 px-4 text-right">
                   <div class="flex items-center justify-end gap-2" (click)="$event.stopPropagation()">
@@ -115,7 +129,7 @@
                       class="px-2.5 py-1 text-xs font-semibold text-purple-600 hover:bg-purple-50 rounded-lg transition">
                       Details
                     </button>
-                    @if (cust.status === 'Active') {
+                    @if (cust.isActive) {
                       <button
                         type="button"
                         (click)="openDeactivateDialog(cust, $event)"
@@ -143,7 +157,7 @@
   <!-- Customer Details Modal / Slide-over Drawer (AS-02) -->
   <app-modal
     [isOpen]="showDetailsModal"
-    [title]="selectedCustomer?.fullName || 'Customer Profile'"
+    [title]="(selectedCustomer?.firstName ? (selectedCustomer?.firstName + ' ' + selectedCustomer?.lastName) : 'Customer Profile')"
     subtitle="Customer Account & Reservation History"
     size="lg"
     (close)="showDetailsModal = false">
@@ -151,14 +165,21 @@
       <div class="space-y-6 text-xs">
         <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
           <div class="w-14 h-14 rounded-2xl bg-purple-600 text-white font-black text-lg flex items-center justify-center">
-            {{ (selectedCustomer.fullName || 'CU').substring(0, 2).toUpperCase() }}
+            {{ (selectedCustomer.firstName || 'C').substring(0, 1) }}{{ (selectedCustomer.lastName || '').substring(0, 1) }}
           </div>
           <div class="flex-1">
-            <h3 class="text-base font-bold text-slate-900">{{ selectedCustomer.fullName }}</h3>
-            <p class="text-slate-500">{{ selectedCustomer.email }} &bull; {{ selectedCustomer.phoneNumber }}</p>
+            <h3 class="text-base font-bold text-slate-900">{{ selectedCustomer.firstName }} {{ selectedCustomer.lastName }}</h3>
+            <p class="text-slate-500">{{ selectedCustomer.email }} &bull; {{ selectedCustomerDetails?.phone || selectedCustomer.phone || selectedCustomer.phoneNumber || 'No phone registered' }}</p>
             <div class="mt-2 flex items-center gap-2">
-              <app-status-badge [status]="selectedCustomer.status" size="xs"></app-status-badge>
-              <span class="text-slate-400">Registered on {{ selectedCustomer.registeredDate | date:'fullDate' }}</span>
+              <app-status-badge [status]="selectedCustomer.isActive ? 'Active' : 'Inactive'" size="xs"></app-status-badge>
+              @if (selectedCustomer.isEmailVerified) {
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-100 text-emerald-700">Email Verified</span>
+              } @else {
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-100 text-amber-700">Email Unverified</span>
+              }
+              @if (selectedCustomerDetails?.createdAt) {
+                <span class="text-slate-400">Registered on {{ selectedCustomerDetails?.createdAt | date:'mediumDate' }}</span>
+              }
             </div>
           </div>
         </div>
@@ -166,23 +187,26 @@
         <div class="grid grid-cols-2 gap-4">
           <div class="p-4 rounded-xl border border-slate-200">
             <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Total Reservations</span>
-            <span class="text-2xl font-black text-slate-900 mt-1 block">{{ selectedCustomer.totalBookings }} Bookings</span>
+            <span class="text-2xl font-black text-slate-900 mt-1 block">{{ selectedCustomer.bookingCount || 0 }} Bookings</span>
           </div>
           <div class="p-4 rounded-xl border border-slate-200">
-            <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Account Health</span>
-            <span class="text-2xl font-black text-emerald-600 mt-1 block">Good Standing</span>
+            <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Account Standing</span>
+            <span class="text-2xl font-black mt-1 block"
+              [class.text-emerald-600]="selectedCustomer.isActive"
+              [class.text-rose-600]="!selectedCustomer.isActive">
+              {{ selectedCustomer.isActive ? 'Active' : 'Deactivated' }}
+            </span>
           </div>
         </div>
 
-        <div class="p-4 bg-purple-50/50 rounded-xl border border-purple-100 text-slate-600 space-y-1.5">
-          <h4 class="font-bold text-slate-900">Account Notes</h4>
-          <p>Customer has verified email and phone credentials. Eligible for priority booking allocations and pre-sale access.</p>
-        </div>
+        @if (isLoadingDetails) {
+          <div class="py-4 text-center text-slate-400">Loading complete account details...</div>
+        }
       </div>
     }
 
     <div modal-footer class="flex items-center justify-between w-full">
-      @if (selectedCustomer?.status === 'Active') {
+      @if (selectedCustomer?.isActive) {
         <button
           type="button"
           (click)="showDetailsModal = false; showDeactivateDialog = true"
@@ -205,7 +229,7 @@
   <app-confirmation-dialog
     [isOpen]="showDeactivateDialog"
     title="Deactivate Customer Account?"
-    [message]="'Are you sure you want to deactivate customer ' + (selectedCustomer?.fullName || '') + '? The customer will be unable to log in or book new events until reactivated.'"
+    [message]="'Are you sure you want to deactivate customer ' + (selectedCustomer?.firstName ? (selectedCustomer?.firstName + ' ' + selectedCustomer?.lastName) : 'this customer') + '? The customer will be unable to log in or book new events until reactivated.'"
     confirmText="Yes, Deactivate"
     cancelText="Keep Active"
     type="danger"

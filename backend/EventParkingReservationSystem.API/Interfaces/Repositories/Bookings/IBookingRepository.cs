@@ -1,4 +1,4 @@
-﻿using EventParkingReservationSystem.API.Models.Entities.Bookings;
+using EventParkingReservationSystem.API.Models.Entities.Bookings;
 
 namespace EventParkingReservationSystem.API.Interfaces.Repositories.Bookings;
 
@@ -11,6 +11,8 @@ public interface IBookingRepository
     Task<IReadOnlyList<Booking>> GetByCustomerIdAsync(int customerId);
 
     Task<IReadOnlyList<Booking>> GetByEventIdAsync(int eventId);
+
+    Task<IReadOnlyList<Booking>> GetAllAsync();
 
     Task<IReadOnlyList<Booking>> GetExpiredPendingBookingsAsync(
         DateTime utcNow);

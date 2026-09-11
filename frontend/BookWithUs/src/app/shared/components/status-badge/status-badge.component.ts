@@ -13,8 +13,21 @@ export class StatusBadgeComponent {
   @Input() size: 'xs' | 'sm' | 'md' | 'lg' = 'sm';
   @Input() showDot: boolean = true;
 
+  get displayLabel(): string {
+    if (typeof this.status === 'number') {
+      switch (this.status) {
+        case 0: return 'Pending';
+        case 1: return 'Confirmed';
+        case 2: return 'Cancelled';
+        case 3: return 'Expired';
+        default: return String(this.status);
+      }
+    }
+    return String(this.status || '');
+  }
+
   get badgeClasses(): string {
-    const s = (this.status != null ? String(this.status) : '').toLowerCase().trim();
+    const s = this.displayLabel.toLowerCase().trim();
     const base = 'inline-flex items-center font-medium rounded-full transition-colors';
 
     const sizeClasses = {
@@ -30,7 +43,7 @@ export class StatusBadgeComponent {
       colorClasses = 'bg-emerald-50 text-emerald-700 border border-emerald-200/60';
     } else if (s === 'pending' || s === 'held' || s === 'reserved' || s === 'in_progress' || s === 'warning') {
       colorClasses = 'bg-amber-50 text-amber-700 border border-amber-200/60';
-    } else if (s === 'cancelled' || s === 'inactive' || s === 'failed' || s === 'danger' || s === 'rejected' || s === 'occupied') {
+    } else if (s === 'cancelled' || s === 'inactive' || s === 'failed' || s === 'danger' || s === 'rejected' || s === 'occupied' || s === 'expired') {
       colorClasses = 'bg-rose-50 text-rose-700 border border-rose-200/60';
     } else if (s === 'vip' || s === 'platinum' || s === 'premium') {
       colorClasses = 'bg-purple-50 text-purple-700 border border-purple-200/60';
@@ -44,12 +57,12 @@ export class StatusBadgeComponent {
   }
 
   get dotClasses(): string {
-    const s = (this.status != null ? String(this.status) : '').toLowerCase().trim();
+    const s = this.displayLabel.toLowerCase().trim();
     if (s === 'confirmed' || s === 'active' || s === 'completed' || s === 'available' || s === 'success' || s === 'paid') {
       return 'bg-emerald-500';
     } else if (s === 'pending' || s === 'held' || s === 'reserved' || s === 'in_progress' || s === 'warning') {
       return 'bg-amber-500';
-    } else if (s === 'cancelled' || s === 'inactive' || s === 'failed' || s === 'danger' || s === 'rejected' || s === 'occupied') {
+    } else if (s === 'cancelled' || s === 'inactive' || s === 'failed' || s === 'danger' || s === 'rejected' || s === 'occupied' || s === 'expired') {
       return 'bg-rose-500';
     } else if (s === 'vip' || s === 'platinum' || s === 'premium') {
       return 'bg-purple-500';

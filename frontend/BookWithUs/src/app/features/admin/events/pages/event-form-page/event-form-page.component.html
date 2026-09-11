@@ -16,44 +16,47 @@
     <form [formGroup]="eventForm" (ngSubmit)="onSubmit()" class="space-y-6">
       <!-- Title -->
       <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Event Title</label>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Event Title / Name <span class="text-red-500">*</span></label>
         <input
           type="text"
-          formControlName="title"
+          formControlName="name"
           placeholder="e.g. Coldplay - Music of the Spheres Tour 2026"
           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
-        <app-form-error [control]="eventForm.get('title')" fieldName="Title"></app-form-error>
+        <app-form-error [control]="eventForm.get('name')" fieldName="Event name"></app-form-error>
       </div>
 
       <!-- Category & Venue Dropdowns -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Event Category</label>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Event Category <span class="text-red-500">*</span></label>
           <select
             formControlName="categoryId"
             class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 text-slate-700">
-            @for (c of categories; track c.categoryId) {
-              <option [value]="c.categoryId">{{ c.name }}</option>
+            @for (c of categories; track c.id) {
+              <option [value]="c.id">{{ c.name }}</option>
             }
           </select>
+          <app-form-error [control]="eventForm.get('categoryId')" fieldName="Category"></app-form-error>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Hosting Venue</label>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Hosting Venue <span class="text-red-500">*</span></label>
           <select
             formControlName="venueId"
+            (change)="onVenueChange()"
             class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600 text-slate-700">
-            @for (v of venues; track v.venueId) {
-              <option [value]="v.venueId">{{ v.name }} (Cap: {{ v.capacity }})</option>
+            @for (v of venues; track v.id) {
+              <option [value]="v.id">{{ v.name }} (Cap: {{ (v.totalCapacity || v.capacity) | number }})</option>
             }
           </select>
+          <app-form-error [control]="eventForm.get('venueId')" fieldName="Venue"></app-form-error>
         </div>
       </div>
 
       <!-- Date & Times -->
       <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Event Date</label>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Event Date <span class="text-red-500">*</span></label>
           <input
             type="date"
             formControlName="eventDate"
@@ -62,49 +65,64 @@
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Start Time</label>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Start Time <span class="text-red-500">*</span></label>
           <input
             type="time"
             formControlName="startTime"
             class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
+          <app-form-error [control]="eventForm.get('startTime')" fieldName="Start time"></app-form-error>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">End Time</label>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">End Time <span class="text-red-500">*</span></label>
           <input
             type="time"
             formControlName="endTime"
             class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
+          <app-form-error [control]="eventForm.get('endTime')" fieldName="End time"></app-form-error>
         </div>
       </div>
 
-      <!-- Price & Poster -->
+      <!-- Price & Capacity -->
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Base Ticket Price ($)</label>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Ticket Price (LKR) <span class="text-red-500">*</span></label>
           <input
             type="number"
-            formControlName="baseTicketPrice"
+            formControlName="ticketPrice"
             class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
-          <app-form-error [control]="eventForm.get('baseTicketPrice')" fieldName="Base price"></app-form-error>
+          <app-form-error [control]="eventForm.get('ticketPrice')" fieldName="Ticket price"></app-form-error>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Poster Image URL</label>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Seating Capacity <span class="text-red-500">*</span></label>
           <input
-            type="text"
-            formControlName="posterImageUrl"
+            type="number"
+            formControlName="capacity"
             class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
+          <app-form-error [control]="eventForm.get('capacity')" fieldName="Capacity"></app-form-error>
+        </div>
+      </div>
+
+      <!-- Poster Upload -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Event Poster Image (Optional)</label>
+        <div class="flex items-center gap-4">
+          <input
+            type="file"
+            (change)="onFileChange($event)"
+            accept="image/*"
+            class="block w-full text-xs text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-purple-50 file:text-purple-700 hover:file:bg-purple-100" />
         </div>
       </div>
 
       <!-- Poster Preview -->
-      @if (eventForm.value.posterImageUrl) {
+      @if (posterPreviewUrl) {
         <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-4">
-          <img [src]="eventForm.value.posterImageUrl" class="w-16 h-16 rounded-lg object-cover bg-slate-200" alt="Poster preview" />
+          <img [src]="posterPreviewUrl" class="w-16 h-16 rounded-lg object-cover bg-slate-200" alt="Poster preview" />
           <div class="text-xs">
-            <span class="font-bold text-slate-800">Poster Image Preview</span>
-            <p class="text-slate-400 text-[11px] truncate max-w-md">{{ eventForm.value.posterImageUrl }}</p>
+            <span class="font-bold text-slate-800">Poster Image Selected</span>
+            <p class="text-slate-400 text-[11px]">{{ selectedPosterFile ? selectedPosterFile.name : 'Current event poster' }}</p>
           </div>
         </div>
       }
@@ -130,10 +148,10 @@
           </label>
 
           <label class="p-3.5 rounded-xl border flex flex-col items-center text-center cursor-pointer transition"
-            [class.border-purple-600]="eventForm.value.stageLayout === 'Theatre'"
-            [class.bg-purple-50/40]="eventForm.value.stageLayout === 'Theatre'">
+            [class.border-purple-600]="eventForm.value.stageLayout === 'Theatre' || eventForm.value.stageLayout === 'StandardArena'"
+            [class.bg-purple-50/40]="eventForm.value.stageLayout === 'Theatre' || eventForm.value.stageLayout === 'StandardArena'">
             <input type="radio" formControlName="stageLayout" value="Theatre" class="sr-only" />
-            <span class="font-bold text-xs text-slate-900">Proscenium Theatre</span>
+            <span class="font-bold text-xs text-slate-900">Proscenium / Arena</span>
             <span class="text-[10px] text-slate-400 mt-0.5">Tiered acoustic hall</span>
           </label>
         </div>

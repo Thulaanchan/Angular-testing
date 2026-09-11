@@ -1,6 +1,6 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, ViewChild, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, RouterModule } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { SeatService } from '../../../../core/services/seats/seat.service';
 import { EventService } from '../../../../core/services/events/event.service';
 import { BookingStateService } from '../../../../core/services/bookings/booking-state.service';
@@ -9,6 +9,7 @@ import { BookingStepperComponent } from '../../../../shared/components/booking-s
 import { LiveBookingSummaryComponent } from '../../../../shared/components/live-booking-summary/live-booking-summary.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { ConfirmationDialogComponent } from '../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { SeatMapComponent } from '../../components/seat-map/seat-map.component';
 
 @Component({
   selector: 'app-seat-selection-page',
@@ -19,99 +20,61 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
     BookingStepperComponent,
     LiveBookingSummaryComponent,
     LoadingSpinnerComponent,
-    ConfirmationDialogComponent
+    ConfirmationDialogComponent,
+    SeatMapComponent
   ],
   templateUrl: './seat-selection-page.component.html',
   styleUrls: ['./seat-selection-page.component.css']
 })
 export class SeatSelectionPageComponent implements OnInit {
-  private seatService = inject(SeatService);
+  private route = inject(ActivatedRoute);
+  private router = inject(Router);
   private eventService = inject(EventService);
   bookingState = inject(BookingStateService);
-  private router = inject(Router);
 
-  seats: SeatAvailabilityDto[] = [];
-  sections: { name: string; tier: string; seats: SeatAvailabilityDto[] }[] = [];
-  isLoading = true;
-  zoomLevel = 1.0;
+  @ViewChild(SeatMapComponent) seatMapComponent?: SeatMapComponent;
 
-  hoveredSeat: SeatAvailabilityDto | null = null;
+  eventId = 1;
+  isLoadingEvent = true;
   showConflictDialog = false;
   conflictMessage = '';
 
   ngOnInit(): void {
-    // Ensure event is selected in state
-    if (!this.bookingState.currentState.event) {
-      this.eventService.getEventById(1).subscribe({
+    const routeId = this.route.snapshot.paramMap.get('id');
+    const paramEventId = routeId ? parseInt(routeId, 10) : null;
+    const currentEvent = this.bookingState.currentState.event;
+    const existingEventId = currentEvent ? (currentEvent.eventId || currentEvent.id) : null;
+
+    const targetEventId = paramEventId || existingEventId || 1;
+    this.eventId = targetEventId;
+
+    if (!currentEvent || (currentEvent.id !== targetEventId && currentEvent.eventId !== targetEventId)) {
+      this.isLoadingEvent = true;
+      this.eventService.getEventById(targetEventId).subscribe({
         next: (event) => {
           this.bookingState.setEvent(event);
-          const eId = event.eventId || event.id;
-          this.loadSeats(eId);
+          this.eventId = event.eventId || event.id;
+          this.isLoadingEvent = false;
         },
         error: () => {
-          this.isLoading = false;
+          this.isLoadingEvent = false;
         }
       });
     } else {
-      const curEvent = this.bookingState.currentState.event;
-      const eId = curEvent.eventId || curEvent.id;
-      this.loadSeats(eId);
+      this.isLoadingEvent = false;
     }
   }
 
-  loadSeats(eventId: number): void {
-    this.isLoading = true;
-    this.seatService.getEventSeats(eventId).subscribe({
-      next: (data) => {
-        this.seats = data;
-        this.groupSeatsBySection(data);
-        this.isLoading = false;
-      },
-      error: () => {
-        this.isLoading = false;
-      }
-    });
+  onConflict(message: string): void {
+    this.conflictMessage = message;
+    this.showConflictDialog = true;
   }
 
-  groupSeatsBySection(allSeats: SeatAvailabilityDto[]): void {
-    const map = new Map<string, { name: string; tier: string; seats: SeatAvailabilityDto[] }>();
-
-    for (const seat of allSeats) {
-      const tierName = seat.tierName || seat.categoryName || 'Standard';
-      const sectionName = seat.sectionName || tierName;
-      if (!map.has(sectionName)) {
-        map.set(sectionName, {
-          name: sectionName,
-          tier: tierName,
-          seats: []
-        });
-      }
-      map.get(sectionName)!.seats.push(seat);
+  onRefreshAfterConflict(): void {
+    this.showConflictDialog = false;
+    if (this.seatMapComponent) {
+      this.seatMapComponent.loadSeats(this.eventId);
     }
-
-    this.sections = Array.from(map.values());
-  }
-
-  isSeatSelected(seatId: number): boolean {
-    return this.bookingState.currentState.selectedSeats.some(s => s.seatId === seatId);
-  }
-
-  onSeatClick(seat: SeatAvailabilityDto): void {
-    if (seat.status !== 'Available') return;
-
-    const seatId = seat.seatId ?? seat.id;
-    const alreadySelected = this.isSeatSelected(seatId);
-    if (!alreadySelected && this.bookingState.currentState.selectedSeats.length >= this.bookingState.totalSeatsRequired) {
-      return; // Reached limit
-    }
-
-    this.bookingState.toggleSeat({
-      ...seat,
-      seatId,
-      seatNumber: seat.seatNumber ?? seat.number,
-      price: seat.price ?? seat.adultPrice,
-      tierName: seat.tierName ?? seat.categoryName
-    });
   }
 
   get canProceed(): boolean {
@@ -122,18 +85,6 @@ export class SeatSelectionPageComponent implements OnInit {
   proceedToParking(): void {
     if (!this.canProceed) return;
     this.router.navigate(['/booking/parking']);
-  }
-
-  zoomIn(): void {
-    if (this.zoomLevel < 1.4) this.zoomLevel += 0.1;
-  }
-
-  zoomOut(): void {
-    if (this.zoomLevel > 0.8) this.zoomLevel -= 0.1;
-  }
-
-  resetZoom(): void {
-    this.zoomLevel = 1.0;
   }
 
   incrementAdults(): void {

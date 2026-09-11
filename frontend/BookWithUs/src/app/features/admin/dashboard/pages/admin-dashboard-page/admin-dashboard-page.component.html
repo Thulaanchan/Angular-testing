@@ -21,51 +21,52 @@
     <div class="py-20">
       <app-loading-spinner message="Loading administration metrics..."></app-loading-spinner>
     </div>
+  } @else if (errorMessage) {
+    <div class="py-8">
+      <app-alert-banner type="error" [message]="errorMessage"></app-alert-banner>
+    </div>
   } @else if (summary) {
-    <!-- 6 KPI Stat Cards Grid (AS-01) -->
+    <!-- 6 KPI Stat Cards Grid (AS-01: Real Backend Metrics) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
       <app-stat-card
-        title="Total Bookings"
-        [value]="summary.totalBookings"
-        change="+14% this month"
-        changeType="positive"
-        icon="ticket"
-        iconBg="bg-purple-100 text-purple-600"></app-stat-card>
-
-      <app-stat-card
-        title="Total Revenue"
-        [value]="'$' + (summary.totalRevenue | number:'1.2-2')"
-        change="+22.4% vs prev"
-        changeType="positive"
-        icon="dollar"
-        iconBg="bg-emerald-100 text-emerald-600"></app-stat-card>
-
-      <app-stat-card
-        title="Active Events"
-        [value]="summary.activeEvents"
-        subtitle="On schedule"
+        title="Total Events"
+        [value]="summary.totalEvents"
+        subtitle="Catalog events"
         icon="calendar"
         iconBg="bg-indigo-100 text-indigo-600"></app-stat-card>
 
       <app-stat-card
-        title="Seat Occupancy"
-        [value]="summary.seatOccupancyRate + '%'"
-        subtitle="Average rate"
+        title="Total Bookings"
+        [value]="summary.totalBookings"
+        subtitle="System reservations"
+        icon="ticket"
+        iconBg="bg-purple-100 text-purple-600"></app-stat-card>
+
+      <app-stat-card
+        title="Available Seats"
+        [value]="summary.availableSeats"
+        subtitle="Across all venues"
         icon="chart"
         iconBg="bg-blue-100 text-blue-600"></app-stat-card>
 
       <app-stat-card
-        title="Parking Usage"
-        [value]="summary.parkingUtilizationRate + '%'"
+        title="Occupied Parking"
+        [value]="summary.occupiedParking"
         subtitle="Reserved stalls"
         icon="car"
         iconBg="bg-amber-100 text-amber-600"></app-stat-card>
 
       <app-stat-card
-        title="Registered Users"
+        title="Total Revenue"
+        [value]="'LKR ' + (summary.totalRevenue | number:'1.0-0')"
+        subtitle="Simulated payments"
+        icon="dollar"
+        iconBg="bg-emerald-100 text-emerald-600"></app-stat-card>
+
+      <app-stat-card
+        title="Total Customers"
         [value]="summary.totalCustomers"
-        change="+8 today"
-        changeType="positive"
+        subtitle="Registered users"
         icon="users"
         iconBg="bg-slate-100 text-slate-700"></app-stat-card>
     </div>
@@ -159,7 +160,7 @@
                 <td class="py-3 px-4 font-medium text-slate-900">{{ b.customerName }}</td>
                 <td class="py-3 px-4 text-slate-600">{{ b.eventTitle }}</td>
                 <td class="py-3 px-4 text-slate-500">{{ b.bookingDate | date:'medium' }}</td>
-                <td class="py-3 px-4 text-right font-bold text-slate-900">${{ b.totalAmount | number:'1.2-2' }}</td>
+                <td class="py-3 px-4 text-right font-bold text-slate-900">LKR {{ b.totalAmount | number:'1.0-0' }}</td>
                 <td class="py-3 px-4 text-center">
                   <app-status-badge [status]="b.status" size="xs"></app-status-badge>
                 </td>

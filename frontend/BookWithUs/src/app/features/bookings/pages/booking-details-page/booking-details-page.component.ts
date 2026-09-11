@@ -58,6 +58,26 @@ export class BookingDetailsPageComponent implements OnInit {
     });
   }
 
+  get canCancel(): boolean {
+    if (!this.booking) return false;
+    const status = this.booking.bookingStatus != null ? this.booking.bookingStatus : (this.booking as any).status;
+    return status === 0 || status === 1 || status === '0' || status === '1' ||
+           String(status).toLowerCase() === 'pending' || String(status).toLowerCase() === 'confirmed';
+  }
+
+  getSeatSummary(seats?: any[]): string {
+    if (!seats || seats.length === 0) return 'No seats selected';
+    return seats.map(s => s.seatCode).join(', ');
+  }
+
+  getVehicleTypeName(vt: any): string {
+    if (vt === 1 || vt === '1' || vt === 'ThreeWheeler') return 'Three-Wheeler';
+    if (vt === 2 || vt === '2' || vt === 'Car') return 'Car';
+    if (vt === 3 || vt === '3' || vt === 'Van') return 'Van';
+    if (vt === 4 || vt === '4' || vt === 'Motorbike') return 'Motorbike';
+    return String(vt || 'Vehicle');
+  }
+
   openReceipt(): void {
     if (!this.booking) return;
     this.paymentService.getReceipt(this.booking.bookingId).subscribe({

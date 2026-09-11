@@ -18,14 +18,14 @@
       <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 uppercase tracking-wider mb-2">
         Payment Successful &bull; Booking Confirmed
       </span>
-      <h1 class="text-3xl font-black text-slate-900 tracking-tight">You're going to {{ booking.eventTitle }}!</h1>
+      <h1 class="text-3xl font-black text-slate-900 tracking-tight">You're going to {{ booking.event?.eventName || booking.eventTitle }}!</h1>
       <p class="text-sm text-slate-500 mt-2 max-w-md mx-auto">
         Your seats and parking space have been secured. We've sent a digital receipt and admission tickets to your email.
       </p>
 
       <div class="mt-6 inline-flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-200 font-mono text-sm font-bold text-purple-700">
         <span>Reference:</span>
-        <span class="text-slate-900">{{ booking.bookingReference }}</span>
+        <span class="text-slate-900">{{ booking.bookingNumber || booking.bookingReference }}</span>
       </div>
 
       <!-- Action Buttons Row -->
@@ -60,19 +60,19 @@
         <div class="text-xs space-y-2">
           <div class="flex justify-between">
             <span class="text-slate-500">Event:</span>
-            <span class="font-bold text-slate-900 text-right">{{ booking.eventTitle }}</span>
+            <span class="font-bold text-slate-900 text-right">{{ booking.event?.eventName || booking.eventTitle }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-500">Date:</span>
-            <span class="font-medium text-slate-800">{{ booking.eventDate | date:'mediumDate' }} • {{ booking.eventDate | date:'shortTime' }}</span>
+            <span class="font-medium text-slate-800">{{ (booking.event?.eventDate || booking.eventDate) | date:'mediumDate' }}<span *ngIf="booking.event?.startTime || booking.startTime"> • {{ booking.event?.startTime || booking.startTime }}</span></span>
           </div>
           <div class="flex justify-between">
             <span class="text-slate-500">Venue:</span>
-            <span class="font-medium text-slate-800">{{ booking.venueName }}</span>
+            <span class="font-medium text-slate-800">{{ booking.event?.venueName || booking.venueName }}</span>
           </div>
           <div class="flex justify-between pt-2 border-t border-slate-100">
             <span class="text-slate-500">Reserved Seats:</span>
-            <span class="font-bold text-purple-700 font-mono">{{ booking.seatSummary }}</span>
+            <span class="font-bold text-purple-700 font-mono">{{ booking.seatSummary || getSeatSummary(booking.seats) }}</span>
           </div>
         </div>
       </div>
@@ -99,7 +99,7 @@
           </div>
           <div class="flex justify-between pt-2 border-t border-slate-100 items-baseline">
             <span class="text-slate-500 font-semibold">Total Amount:</span>
-            <span class="text-lg font-black text-purple-700">${{ booking.totalAmount | number:'1.2-2' }}</span>
+            <span class="text-lg font-black text-purple-700">LKR {{ booking.totalAmount | number:'1.2-2' }}</span>
           </div>
         </div>
       </div>

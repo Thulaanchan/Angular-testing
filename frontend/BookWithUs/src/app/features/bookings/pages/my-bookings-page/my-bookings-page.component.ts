@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { BookingService } from '../../../../core/services/bookings/booking.service';
+import { AuthService } from '../../../../core/services/auth/auth.service';
 import { BookingSummaryDto } from '../../../../core/models/bookings/booking.model';
 import { StatusBadgeComponent } from '../../../../shared/components/status-badge/status-badge.component';
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
@@ -26,6 +27,7 @@ import { ConfirmationDialogComponent } from '../../../../shared/components/confi
 })
 export class MyBookingsPageComponent implements OnInit {
   private bookingService = inject(BookingService);
+  private authService = inject(AuthService);
   private router = inject(Router);
 
   bookings: BookingSummaryDto[] = [];
@@ -46,13 +48,16 @@ export class MyBookingsPageComponent implements OnInit {
 
   loadBookings(): void {
     this.isLoading = true;
-    this.bookingService.getCustomerBookings().subscribe({
+    const customerId = this.authService.getCustomerId() || 1;
+    this.bookingService.getCustomerBookings(customerId).subscribe({
       next: (data) => {
-        this.bookings = data;
+        this.bookings = data || [];
         this.filterBookings();
         this.isLoading = false;
       },
       error: () => {
+        this.bookings = [];
+        this.filterBookings();
         this.isLoading = false;
       }
     });
@@ -63,26 +68,39 @@ export class MyBookingsPageComponent implements OnInit {
     this.filterBookings();
   }
 
+  normalizeStatus(status: any): string {
+    if (status === 0 || status === '0') return 'pending';
+    if (status === 1 || status === '1') return 'confirmed';
+    if (status === 2 || status === '2') return 'cancelled';
+    if (status === 3 || status === '3') return 'expired';
+    return String(status || '').toLowerCase();
+  }
+
   filterBookings(): void {
     let result = [...this.bookings];
 
     if (this.selectedTab !== 'all') {
       result = result.filter(b => {
-        const s = b.status || (b.bookingStatus != null ? String(b.bookingStatus) : '');
-        return s.toLowerCase() === this.selectedTab;
+        const s = this.normalizeStatus(b.bookingStatus != null ? b.bookingStatus : (b as any).status);
+        return s === this.selectedTab;
       });
     }
 
     if (this.searchQuery.trim()) {
       const q = this.searchQuery.toLowerCase();
       result = result.filter(b =>
-        (b.eventTitle || b.eventName || '').toLowerCase().includes(q) ||
-        (b.bookingReference || b.bookingNumber || '').toLowerCase().includes(q) ||
+        (b.eventName || b.eventTitle || '').toLowerCase().includes(q) ||
+        (b.bookingNumber || b.bookingReference || '').toLowerCase().includes(q) ||
         (b.venueName || '').toLowerCase().includes(q)
       );
     }
 
     this.filteredBookings = result;
+  }
+
+  canCancel(booking: BookingSummaryDto): boolean {
+    const s = this.normalizeStatus(booking.bookingStatus != null ? booking.bookingStatus : (booking as any).status);
+    return s === 'confirmed' || s === 'pending';
   }
 
   openCancelDialog(booking: BookingSummaryDto, event: MouseEvent): void {

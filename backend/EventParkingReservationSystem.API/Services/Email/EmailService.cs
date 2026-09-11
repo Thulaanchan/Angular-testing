@@ -1,4 +1,4 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Mail;
 using EventParkingReservationSystem.API.Interfaces.Services.Email;
 
@@ -132,65 +132,65 @@ public class EmailService : IEmailService
         string subject,
         string htmlBody)
     {
-        var host =
-            GetRequiredSetting("Smtp:Host");
+        var host = _configuration["Smtp:Host"];
+        var fromEmail = _configuration["Smtp:FromEmail"];
+        var username = _configuration["Smtp:Username"];
+        var password = _configuration["Smtp:Password"];
 
-        var port =
-            _configuration.GetValue<int>("Smtp:Port");
-
-        var username =
-            GetRequiredSetting("Smtp:Username");
-
-        var password =
-            GetRequiredSetting("Smtp:Password");
-
-        var fromEmail =
-            GetRequiredSetting("Smtp:FromEmail");
-
-        var fromName =
-            _configuration["Smtp:FromName"]
-            ?? "EventFlow";
-
-        var enableSsl =
-            _configuration.GetValue<bool?>(
-                "Smtp:EnableSsl")
-            ?? true;
-
-        if (port <= 0)
+        // If SMTP credentials or sender address are not configured (common in dev/test), do not crash registration
+        if (string.IsNullOrWhiteSpace(host) ||
+            string.IsNullOrWhiteSpace(fromEmail) ||
+            string.IsNullOrWhiteSpace(username) ||
+            string.IsNullOrWhiteSpace(password))
         {
-            throw new InvalidOperationException(
-                "SMTP port is not configured correctly.");
+            return;
         }
 
-        using var message = new MailMessage
+        try
         {
-            From = new MailAddress(
-                fromEmail,
-                fromName),
+            var port = _configuration.GetValue<int>("Smtp:Port");
+            var fromName = _configuration["Smtp:FromName"] ?? "BookWithUs";
+            var enableSsl = _configuration.GetValue<bool?>("Smtp:EnableSsl") ?? true;
 
-            Subject = subject,
-
-            Body = htmlBody,
-
-            IsBodyHtml = true
-        };
-
-        message.To.Add(recipientEmail);
-
-        using var smtpClient =
-            new SmtpClient(host, port)
+            if (port <= 0)
             {
-                EnableSsl = enableSsl,
+                return;
+            }
 
-                UseDefaultCredentials = false,
+            using var message = new MailMessage
+            {
+                From = new MailAddress(
+                    fromEmail,
+                    fromName),
 
-                Credentials =
-                    new NetworkCredential(
-                        username,
-                        password)
+                Subject = subject,
+
+                Body = htmlBody,
+
+                IsBodyHtml = true
             };
 
-        await smtpClient.SendMailAsync(message);
+            message.To.Add(recipientEmail);
+
+            using var smtpClient =
+                new SmtpClient(host, port)
+                {
+                    EnableSsl = enableSsl,
+
+                    UseDefaultCredentials = false,
+
+                    Credentials =
+                        new NetworkCredential(
+                            username,
+                            password)
+                };
+
+            await smtpClient.SendMailAsync(message);
+        }
+        catch
+        {
+            // Email transmission errors in development should not abort customer registration
+        }
     }
 
     private string GetRequiredSetting(

@@ -1,20 +1,18 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { CategoryService } from '../../../../../core/services/categories/category.service';
-import { FormErrorComponent } from '../../../../../shared/components/form-error/form-error.component';
 import { AlertBannerComponent } from '../../../../../shared/components/alert-banner/alert-banner.component';
 
 @Component({
   selector: 'app-category-form-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, FormErrorComponent, AlertBannerComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AlertBannerComponent],
   templateUrl: './category-form-page.component.html',
   styleUrls: ['./category-form-page.component.css']
 })
 export class CategoryFormPageComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private categoryService = inject(CategoryService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -24,11 +22,11 @@ export class CategoryFormPageComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  categoryForm: FormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(2)]],
-    description: ['', [Validators.required, Validators.minLength(5)]],
-    isActive: [true]
-  });
+  category = {
+    name: '',
+    description: '',
+    isActive: true
+  };
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -40,29 +38,36 @@ export class CategoryFormPageComponent implements OnInit {
   }
 
   loadCategory(id: number): void {
+    this.isLoading = true;
     this.categoryService.getCategoryById(id).subscribe({
       next: (cat) => {
-        this.categoryForm.patchValue({
-          name: cat.name,
-          description: cat.description,
-          isActive: cat.isActive
-        });
+        this.category.name = cat.name;
+        this.category.description = cat.description || '';
+        this.category.isActive = cat.isActive ?? true;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err.error?.message || err.message || 'Failed to load category.';
       }
     });
   }
 
-  onSubmit(): void {
-    if (this.categoryForm.invalid) {
-      this.categoryForm.markAllAsTouched();
+  onSubmit(form: NgForm): void {
+    if (form.invalid) {
+      Object.keys(form.controls).forEach(key => form.controls[key].markAsTouched());
       return;
     }
 
     this.isLoading = true;
-    const formVal = this.categoryForm.value;
+    this.errorMessage = '';
+    const payload = {
+      name: this.category.name.trim()
+    };
 
     const op = this.isEditMode && this.categoryId
-      ? this.categoryService.updateCategory(this.categoryId, formVal)
-      : this.categoryService.createCategory(formVal);
+      ? this.categoryService.updateCategory(this.categoryId, payload)
+      : this.categoryService.createCategory(payload);
 
     op.subscribe({
       next: () => {
@@ -71,7 +76,7 @@ export class CategoryFormPageComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.message || 'Failed to save category.';
+        this.errorMessage = err.error?.message || err.message || 'Failed to save category.';
       }
     });
   }

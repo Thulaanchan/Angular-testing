@@ -27,35 +27,39 @@
     <div class="py-16">
       <app-loading-spinner message="Loading your dashboard..."></app-loading-spinner>
     </div>
+  } @else if (errorMessage) {
+    <div class="py-8">
+      <app-alert-banner type="error" [message]="errorMessage"></app-alert-banner>
+    </div>
   } @else if (summary) {
-    <!-- 4 KPI Stat Cards (CUS-07) -->
+    <!-- 4 KPI Stat Cards (CUS-07: Real Backend Metrics) -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
       <app-stat-card
-        title="Total Bookings"
-        [value]="summary.totalBookings || 0"
-        subtitle="Completed & active"
+        title="Upcoming Bookings"
+        [value]="summary.upcomingBookingsCount || 0"
+        subtitle="Active & Confirmed"
         icon="ticket"
         iconBg="bg-purple-100 text-purple-600"></app-stat-card>
 
       <app-stat-card
-        title="Active Passes"
-        [value]="summary.activePasses || 0"
-        subtitle="Ready for entry"
-        icon="check"
-        iconBg="bg-emerald-100 text-emerald-600"></app-stat-card>
-
-      <app-stat-card
-        title="Parking Reserved"
-        [value]="summary.parkingReservations || 0"
-        subtitle="Guaranteed slots"
+        title="Reserved Parking"
+        [value]="summary.reservedParkingCount || 0"
+        subtitle="Allocated spaces"
         icon="car"
         iconBg="bg-indigo-100 text-indigo-600"></app-stat-card>
 
       <app-stat-card
-        title="Total Spent"
-        [value]="'$' + (summary.totalSpent | number:'1.2-2')"
-        subtitle="Across all orders"
+        title="Recent Payments"
+        [value]="summary.recentPaymentsCount || 0"
+        subtitle="Settled transactions"
         icon="dollar"
+        iconBg="bg-emerald-100 text-emerald-600"></app-stat-card>
+
+      <app-stat-card
+        title="Unread Notifications"
+        [value]="summary.unreadNotificationsCount || 0"
+        subtitle="Alerts & reminders"
+        icon="inbox"
         iconBg="bg-amber-100 text-amber-700"></app-stat-card>
     </div>
 
@@ -147,7 +151,7 @@
                 <p class="text-xs text-slate-500 truncate mt-1">{{ item.venueName }}</p>
               </div>
               <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-900">From ${{ item.baseTicketPrice | number:'1.2-2' }}</span>
+                <span class="text-xs font-bold text-slate-900">From LKR {{ item.baseTicketPrice | number:'1.0-0' }}</span>
                 <a [routerLink]="['/events', item.eventId]" class="px-3 py-1 bg-purple-50 hover:bg-purple-600 text-purple-700 hover:text-white text-xs font-semibold rounded-lg transition">
                   Book
                 </a>

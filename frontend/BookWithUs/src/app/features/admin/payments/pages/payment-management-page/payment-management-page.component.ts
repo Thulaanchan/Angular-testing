@@ -43,29 +43,48 @@ export class PaymentManagementPageComponent implements OnInit {
 
   loadPayments(): void {
     this.isLoading = true;
-    this.paymentService.getCustomerPayments().subscribe({
+    this.paymentService.getAllPayments().subscribe({
       next: (data: PaymentHistoryDto[]) => {
-        this.payments = data;
+        this.payments = data || [];
         this.filter();
         this.isLoading = false;
       },
       error: () => {
+        this.payments = [];
         this.isLoading = false;
       }
     });
   }
 
+  getPaymentMethodName(method: any): string {
+    if (method === 1 || method === '1' || method === 'Card') return 'Credit / Debit Card';
+    if (method === 2 || method === '2' || method === 'MobileWallet') return 'Mobile Wallet';
+    if (method === 3 || method === '3' || method === 'NetBanking') return 'Net Banking';
+    if (method === 4 || method === '4' || method === 'LankaQr') return 'LankaQR';
+    return String(method || 'Card');
+  }
+
+  getPaymentStatusName(status: any): string {
+    if (status === 0 || status === '0' || status === 'Pending') return 'Pending';
+    if (status === 1 || status === '1' || status === 'Completed') return 'Completed';
+    if (status === 2 || status === '2' || status === 'Failed') return 'Failed';
+    return String(status || 'Completed');
+  }
+
   filter(): void {
     let list = [...this.payments];
     if (this.statusFilter !== 'all') {
-      list = list.filter(p => (p.paymentStatus != null ? String(p.paymentStatus) : '').toLowerCase() === this.statusFilter.toLowerCase());
+      list = list.filter(p => {
+        const s = this.getPaymentStatusName(p.status ?? p.paymentStatus).toLowerCase();
+        return s === this.statusFilter.toLowerCase();
+      });
     }
     if (this.searchTerm.trim()) {
       const q = this.searchTerm.toLowerCase();
       list = list.filter(p =>
-        (p.bookingNumber && p.bookingNumber.toLowerCase().includes(q)) ||
-        (p.eventName && p.eventName.toLowerCase().includes(q)) ||
-        (p.customerName && p.customerName.toLowerCase().includes(q))
+        ((p.bookingNumber || p.bookingReference || '').toLowerCase().includes(q)) ||
+        ((p.eventName || p.eventTitle || '').toLowerCase().includes(q)) ||
+        (p.customerName ? p.customerName.toLowerCase().includes(q) : false)
       );
     }
     this.filteredPayments = list;

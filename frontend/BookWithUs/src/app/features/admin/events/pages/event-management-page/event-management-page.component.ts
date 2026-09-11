@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { EventService } from '../../../../../core/services/events/event.service';
 import { CategoryService } from '../../../../../core/services/categories/category.service';
 import { VenueService } from '../../../../../core/services/venues/venue.service';
-import { EventSummaryDto, EventDetailsDto } from '../../../../../core/models/events/event.model';
+import { EventListItemDto } from '../../../../../core/models/events/event.model';
 import { CategoryDto } from '../../../../../core/models/categories/category.model';
 import { VenueDto } from '../../../../../core/models/venues/venue.model';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
@@ -13,6 +13,7 @@ import { LoadingSpinnerComponent } from '../../../../../shared/components/loadin
 import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { ModalComponent } from '../../../../../shared/components/modal/modal.component';
+import { AlertBannerComponent } from '../../../../../shared/components/alert-banner/alert-banner.component';
 
 @Component({
   selector: 'app-event-management-page',
@@ -25,7 +26,8 @@ import { ModalComponent } from '../../../../../shared/components/modal/modal.com
     LoadingSpinnerComponent,
     EmptyStateComponent,
     PaginationComponent,
-    ModalComponent
+    ModalComponent,
+    AlertBannerComponent
   ],
   templateUrl: './event-management-page.component.html',
   styleUrls: ['./event-management-page.component.css']
@@ -36,10 +38,12 @@ export class EventManagementPageComponent implements OnInit {
   private venueService = inject(VenueService);
   private router = inject(Router);
 
-  events: EventSummaryDto[] = [];
+  events: EventListItemDto[] = [];
   categories: CategoryDto[] = [];
   venues: VenueDto[] = [];
   isLoading = true;
+  errorMessage = '';
+  successMessage = '';
 
   searchTerm = '';
   selectedCategoryId: number | null = null;
@@ -50,7 +54,7 @@ export class EventManagementPageComponent implements OnInit {
   totalPages = 1;
   totalCount = 0;
 
-  selectedEvent: EventSummaryDto | null = null;
+  selectedEvent: EventListItemDto | null = null;
   showDetailsModal = false;
 
   ngOnInit(): void {
@@ -61,8 +65,9 @@ export class EventManagementPageComponent implements OnInit {
 
   loadEvents(): void {
     this.isLoading = true;
+    this.errorMessage = '';
     this.eventService.getEvents({
-      pageNumber: this.currentPage,
+      page: this.currentPage,
       pageSize: this.pageSize,
       searchTerm: this.searchTerm || undefined,
       categoryId: this.selectedCategoryId || undefined,
@@ -74,8 +79,9 @@ export class EventManagementPageComponent implements OnInit {
         this.totalPages = res.totalPages;
         this.isLoading = false;
       },
-      error: () => {
+      error: (err) => {
         this.isLoading = false;
+        this.errorMessage = err.error?.message || err.message || 'Failed to load events.';
       }
     });
   }
@@ -90,8 +96,33 @@ export class EventManagementPageComponent implements OnInit {
     this.loadEvents();
   }
 
-  viewEvent(event: EventSummaryDto): void {
+  viewEvent(event: EventListItemDto): void {
     this.selectedEvent = event;
     this.showDetailsModal = true;
+  }
+
+  deleteEvent(event: EventListItemDto): void {
+    if (!confirm(`Are you sure you want to delete event "${event.name || event.title}"?`)) {
+      return;
+    }
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.eventService.deleteEvent(event.id).subscribe({
+      next: () => {
+        this.successMessage = `Event "${event.name || event.title}" deleted successfully.`;
+        this.loadEvents();
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          this.errorMessage = `Cannot delete event "${event.name || event.title}" because it has active customer bookings.`;
+        } else {
+          this.errorMessage = err.error?.message || err.message || `Failed to delete event "${event.name || event.title}".`;
+        }
+      }
+    });
+  }
+
+  onImgError(event: Event): void {
+    (event.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=400&q=80';
   }
 }

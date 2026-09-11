@@ -1,4 +1,4 @@
-﻿using System.Security.Claims;
+using System.Security.Claims;
 using EventParkingReservationSystem.API.Common.Constants;
 using EventParkingReservationSystem.API.Common.Exceptions;
 using EventParkingReservationSystem.API.Interfaces.Services.Bookings;
@@ -225,24 +225,23 @@ public class BookingsController : ControllerBase
     public async Task<
         ActionResult<IReadOnlyList<BookingSummaryDto>>>
         GetEventBookings(
-            [FromQuery] int eventId)
+            [FromQuery] int? eventId = null)
     {
-        if (eventId <= 0)
+        if (eventId.HasValue && eventId.Value > 0)
         {
-            return BadRequest(new
-            {
-                message =
-                    "A valid event ID is required."
-            });
+            var eventBookings =
+                await _bookingService
+                    .GetEventBookingsAsync(
+                        eventId.Value);
+
+            return Ok(eventBookings);
         }
 
-        var bookings =
+        var allBookings =
             await _bookingService
-                .GetEventBookingsAsync(
-                    eventId);
+                .GetAllBookingsAsync();
 
-        return Ok(
-            bookings);
+        return Ok(allBookings);
     }
 
 

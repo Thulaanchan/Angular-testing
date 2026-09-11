@@ -1,0 +1,97 @@
+<div class="space-y-4">
+  <!-- Zone Filter & Legend Toolbar -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
+    <div class="flex flex-wrap items-center gap-2">
+      <span class="text-xs font-semibold text-slate-500">Filter Zone:</span>
+      <button
+        type="button"
+        (click)="setZone('all')"
+        class="px-3 py-1 rounded-lg text-xs font-semibold transition"
+        [ngClass]="selectedZone === 'all' ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'">
+        All
+      </button>
+      @for (z of zones; track z.id) {
+        <button
+          type="button"
+          (click)="setZone(z.name)"
+          class="px-3 py-1 rounded-lg text-xs font-semibold transition"
+          [ngClass]="selectedZone.toLowerCase() === z.name.toLowerCase() ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'">
+          {{ z.name }}
+        </button>
+      }
+    </div>
+
+    <!-- Status Legend -->
+    <div class="flex items-center gap-3 text-xs text-slate-600">
+      <div class="flex items-center gap-1.5">
+        <span class="w-3.5 h-3.5 rounded bg-emerald-100 border border-emerald-300"></span>
+        <span>Available</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-3.5 h-3.5 rounded bg-purple-600 border border-purple-700 shadow-xs"></span>
+        <span class="font-bold text-purple-700">Selected</span>
+      </div>
+      <div class="flex items-center gap-1.5">
+        <span class="w-3.5 h-3.5 rounded bg-slate-200 border border-slate-300"></span>
+        <span class="text-slate-400">Occupied</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Parking Bay Grid Map -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
+    @if (isLoading) {
+      <div class="py-16">
+        <app-loading-spinner message="Loading available parking stalls..."></app-loading-spinner>
+      </div>
+    } @else if (errorMessage) {
+      <div class="py-16 text-center space-y-3">
+        <p class="text-rose-600 text-sm font-semibold">{{ errorMessage }}</p>
+        <button
+          type="button"
+          (click)="loadParking(eventId)"
+          class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-xl transition">
+          Retry Loading Parking
+        </button>
+      </div>
+    } @else if (filteredSlots.length === 0) {
+      <div class="py-16 text-center text-slate-400 text-sm">
+        No parking stalls found for the selected zone filter.
+      </div>
+    } @else {
+      <!-- Child Parking Slot Component Grid -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
+        @for (slot of filteredSlots; track slot.id) {
+          <app-parking-slot
+            [slot]="slot"
+            [isSelected]="isSlotSelected(slot.id)"
+            (slotClick)="onSlotClick($event)"
+            (slotHover)="hoveredSlot = $event">
+          </app-parking-slot>
+        }
+      </div>
+
+      <!-- Hover Tooltip Bar -->
+      <div class="h-6 mt-4 text-xs text-slate-500 border-t border-slate-100 pt-3 flex items-center justify-between">
+        @if (hoveredSlot) {
+          <div>
+            <span class="font-mono text-purple-700 font-bold">Stall {{ hoveredSlot.slotCode | slotCode }}</span> &bull;
+            <span>{{ hoveredSlot.zoneName }}</span> &bull;
+            <span class="font-semibold">{{ hoveredSlot.fee | currency:'LKR':'symbol':'1.0-0' }}</span> &bull;
+            <span
+              [ngClass]="{
+                'text-emerald-600 font-semibold': hoveredSlot.status === 'Available',
+                'text-amber-600 font-semibold': hoveredSlot.status === 'Held',
+                'text-slate-400': hoveredSlot.status === 'Occupied' || hoveredSlot.status === 'Reserved'
+              }">
+              {{ hoveredSlot.status }}
+            </span>
+          </div>
+        } @else {
+          <span class="italic text-slate-400">Click an available stall to select &bull; Click again to deselect</span>
+        }
+        <span class="text-[11px] text-slate-400">Fixed event rate &bull; 1 slot per booking</span>
+      </div>
+    }
+  </div>
+</div>

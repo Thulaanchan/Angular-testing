@@ -16,14 +16,15 @@ export class SeatService {
 
   getEventSeats(eventId: number): Observable<SeatAvailabilityDto[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<SeatAvailabilityDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.seats.byEvent(eventId)}`).pipe(
-        catchError(() => of(this.mockData.generateSeatsForEvent(eventId)))
-      );
+      return this.http.get<SeatAvailabilityDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.seats.byEvent(eventId)}`);
     }
     return of(this.mockData.generateSeatsForEvent(eventId));
   }
 
   getSeatById(id: number): Observable<SeatDto> {
+    if (!API_CONFIG.useMockData) {
+      return this.http.get<SeatDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.seats.byId(id)}`);
+    }
     const mockSeat: SeatDto = {
       id,
       eventId: 1,
@@ -43,11 +44,6 @@ export class SeatService {
       isPubliclyBookable: true,
       status: 'Booked'
     };
-    if (!API_CONFIG.useMockData) {
-      return this.http.get<SeatDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.seats.byId(id)}`).pipe(
-        catchError(() => of(mockSeat))
-      );
-    }
     return of(mockSeat);
   }
 
@@ -119,14 +115,7 @@ export class SeatService {
 
   getSeatLayoutCategories(eventId: number): Observable<any[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<any[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.seats.layoutCategories(eventId)}`).pipe(
-        catchError(() => of([
-          { id: 1, eventId, name: 'VIP', code: 'VIP', adultPrice: 20000, isPubliclyBookable: false, displayOrder: 1 },
-          { id: 2, eventId, name: 'Platinum', code: 'P', adultPrice: 15000, isPubliclyBookable: true, displayOrder: 2 },
-          { id: 3, eventId, name: 'Gold', code: 'G', adultPrice: 12500, isPubliclyBookable: true, displayOrder: 3 },
-          { id: 4, eventId, name: 'Silver', code: 'S', adultPrice: 10000, isPubliclyBookable: true, displayOrder: 4 }
-        ]))
-      );
+      return this.http.get<any[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.seats.layoutCategories(eventId)}`);
     }
     return of([
       { id: 1, eventId, name: 'VIP', code: 'VIP', adultPrice: 20000, isPubliclyBookable: false, displayOrder: 1 },
@@ -138,14 +127,7 @@ export class SeatService {
 
   getSeatLayoutSections(eventId: number): Observable<any[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<any[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.seats.layoutSections(eventId)}`).pipe(
-        catchError(() => of([
-          { id: 1, eventId, eventSeatCategoryId: 1, code: 'VIP', name: 'VIP Ring', categoryName: 'VIP', displayOrder: 1, seatCount: 20 },
-          { id: 2, eventId, eventSeatCategoryId: 2, code: 'P-N', name: 'Platinum North', categoryName: 'Platinum', displayOrder: 2, seatCount: 208 },
-          { id: 3, eventId, eventSeatCategoryId: 3, code: 'G-E', name: 'Gold East', categoryName: 'Gold', displayOrder: 3, seatCount: 208 },
-          { id: 4, eventId, eventSeatCategoryId: 4, code: 'S-S', name: 'Silver South', categoryName: 'Silver', displayOrder: 4, seatCount: 188 }
-        ]))
-      );
+      return this.http.get<any[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.seats.layoutSections(eventId)}`);
     }
     return of([
       { id: 1, eventId, eventSeatCategoryId: 1, code: 'VIP', name: 'VIP Ring', categoryName: 'VIP', displayOrder: 1, seatCount: 20 },

@@ -15,7 +15,7 @@
           <button
             type="button"
             (click)="skipParking()"
-            class="text-xs font-semibold text-slate-500 hover:text-slate-800 hover:underline">
+            class="text-xs font-semibold text-slate-500 hover:text-purple-600 hover:underline">
             Skip Parking &rarr;
           </button>
         </div>
@@ -34,114 +34,25 @@
               [class.bg-slate-50/50]="selectedVehicleType !== vt.type"
               [class.hover:bg-slate-100]="selectedVehicleType !== vt.type">
               <span class="block text-xs font-bold text-slate-900">{{ vt.label }}</span>
-              <span class="text-xs font-black text-purple-700 mt-1 block">${{ vt.fee | number:'1.2-2' }}</span>
+              <span class="text-xs font-black text-purple-700 mt-1 block">{{ vt.fee | currency:'LKR':'symbol':'1.0-0' }}</span>
               <span class="text-[10px] text-slate-400 block mt-0.5">Fixed event rate</span>
             </button>
           }
         </div>
       </div>
 
-      <!-- Zone Filter & Legend -->
-      <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
-        <div class="flex items-center gap-2">
-          <span class="text-xs font-semibold text-slate-500">Filter Zone:</span>
-          <button
-            type="button"
-            (click)="setZone('all')"
-            class="px-3 py-1 rounded-lg text-xs font-semibold"
-            [class.bg-purple-600]="selectedZone === 'all'"
-            [class.text-white]="selectedZone === 'all'"
-            [class.bg-slate-100]="selectedZone !== 'all'"
-            [class.text-slate-700]="selectedZone !== 'all'">
-            All
-          </button>
-          <button
-            type="button"
-            (click)="setZone('A')"
-            class="px-3 py-1 rounded-lg text-xs font-semibold"
-            [class.bg-purple-600]="selectedZone === 'A'"
-            [class.text-white]="selectedZone === 'A'"
-            [class.bg-slate-100]="selectedZone !== 'A'"
-            [class.text-slate-700]="selectedZone !== 'A'">
-            Zone A (Main Gate)
-          </button>
-          <button
-            type="button"
-            (click)="setZone('B')"
-            class="px-3 py-1 rounded-lg text-xs font-semibold"
-            [class.bg-purple-600]="selectedZone === 'B'"
-            [class.text-white]="selectedZone === 'B'"
-            [class.bg-slate-100]="selectedZone !== 'B'"
-            [class.text-slate-700]="selectedZone !== 'B'">
-            Zone B (North)
-          </button>
-          <button
-            type="button"
-            (click)="setZone('C')"
-            class="px-3 py-1 rounded-lg text-xs font-semibold"
-            [class.bg-purple-600]="selectedZone === 'C'"
-            [class.text-white]="selectedZone === 'C'"
-            [class.bg-slate-100]="selectedZone !== 'C'"
-            [class.text-slate-700]="selectedZone !== 'C'">
-            Zone C (West)
-          </button>
+      <!-- Parent ParkingMapComponent -->
+      @if (isLoadingEvent) {
+        <div class="py-20 bg-white rounded-2xl border border-slate-200/80 p-6 flex justify-center">
+          <app-loading-spinner message="Loading event parking details..."></app-loading-spinner>
         </div>
-
-        <div class="flex items-center gap-3 text-xs text-slate-600">
-          <div class="flex items-center gap-1.5">
-            <span class="w-3.5 h-3.5 rounded bg-emerald-100 border border-emerald-300"></span>
-            <span>Available</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-3.5 h-3.5 rounded bg-purple-600 border border-purple-700"></span>
-            <span class="font-bold text-purple-700">Selected</span>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <span class="w-3.5 h-3.5 rounded bg-slate-200 border border-slate-300"></span>
-            <span class="text-slate-400">Occupied</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Parking Bay Grid Map -->
-      <div class="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs">
-        @if (isLoading) {
-          <div class="py-16">
-            <app-loading-spinner message="Loading available parking stalls..."></app-loading-spinner>
-          </div>
-        } @else {
-          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-3">
-            @for (slot of filteredSlots; track slot.slotId) {
-              <button
-                type="button"
-                (click)="onSlotClick(slot)"
-                [disabled]="slot.status !== 'Available'"
-                class="p-3 rounded-xl border flex flex-col items-center justify-between text-center transition-all cursor-pointer min-h-[78px]"
-                [class.bg-purple-600]="isSlotSelected(slot.slotId)"
-                [class.border-purple-700]="isSlotSelected(slot.slotId)"
-                [class.text-white]="isSlotSelected(slot.slotId)"
-                [class.ring-2]="isSlotSelected(slot.slotId)"
-                [class.ring-purple-300]="isSlotSelected(slot.slotId)"
-                [class.scale-105]="isSlotSelected(slot.slotId)"
-                [class.bg-emerald-50/50]="!isSlotSelected(slot.slotId) && slot.status === 'Available'"
-                [class.border-emerald-200]="!isSlotSelected(slot.slotId) && slot.status === 'Available'"
-                [class.hover:border-purple-400]="!isSlotSelected(slot.slotId) && slot.status === 'Available'"
-                [class.bg-slate-100]="slot.status !== 'Available'"
-                [class.border-slate-200]="slot.status !== 'Available'"
-                [class.text-slate-400]="slot.status !== 'Available'"
-                [class.cursor-not-allowed]="slot.status !== 'Available'">
-                <span class="font-mono text-xs font-black">{{ slot.slotCode }}</span>
-                <span class="text-[10px] opacity-80 uppercase tracking-tight">Zone {{ slot.zoneName }}</span>
-                <span class="text-[10px] font-semibold mt-1"
-                  [class.text-emerald-700]="!isSlotSelected(slot.slotId) && slot.status === 'Available'"
-                  [class.text-purple-100]="isSlotSelected(slot.slotId)">
-                  {{ isSlotSelected(slot.slotId) ? 'Selected' : (slot.status === 'Available' ? '$' + slot.fee : 'Taken') }}
-                </span>
-              </button>
-            }
-          </div>
-        }
-      </div>
+      } @else {
+        <app-parking-map
+          [eventId]="eventId"
+          [selectedVehicleType]="selectedVehicleType"
+          (conflictOccurred)="onConflict($event)">
+        </app-parking-map>
+      }
 
       <!-- Navigation CTAs at Bottom of Screen -->
       <div class="flex items-center justify-between pt-2">
@@ -160,9 +71,8 @@
           <button
             type="button"
             (click)="continueToReview()"
-            class="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5">
-            <span>Continue to Review</span>
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" /></svg>
+            class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-xl shadow-xs transition">
+            Continue to Review &rarr;
           </button>
         </div>
       </div>
@@ -171,20 +81,22 @@
     <!-- Right 1 Col: Live Booking Summary -->
     <div>
       <app-live-booking-summary
-        actionLabel="Review Booking"
+        actionLabel="Continue to Review"
         [canProceed]="true"
-        (proceed)="continueToReview()"></app-live-booking-summary>
+        (proceed)="continueToReview()">
+      </app-live-booking-summary>
     </div>
   </div>
 
-  <!-- 409 Parking Conflict Dialog -->
+  <!-- 409 Conflict Dialog -->
   <app-confirmation-dialog
     [isOpen]="showConflictDialog"
-    title="Parking Bay Conflict (409)"
-    [message]="conflictMessage || 'This parking slot was recently reserved by another visitor. Please pick another available stall or skip parking.'"
-    confirmText="Refresh Parking Slots"
+    title="Parking Stall Conflict (409)"
+    [message]="conflictMessage || 'The selected parking stall was recently reserved by another customer. Please pick an alternative slot or continue without parking.'"
+    confirmText="Refresh Parking Stalls"
     cancelText="Dismiss"
     type="warning"
-    (confirm)="showConflictDialog = false; loadParkingSlots(bookingState.currentState.event?.venueId || 1)"
-    (cancel)="showConflictDialog = false"></app-confirmation-dialog>
+    (confirm)="onRefreshAfterConflict()"
+    (cancel)="showConflictDialog = false">
+  </app-confirmation-dialog>
 </div>

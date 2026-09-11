@@ -30,18 +30,6 @@ export class UserMenuComponent {
     this.router.navigate(['/auth/login']);
   }
 
-  switchToAdmin() {
-    this.authService.setDemoAdminSession();
-    this.close();
-    this.router.navigate(['/admin/dashboard']);
-  }
-
-  switchToCustomer() {
-    this.authService.setDemoCustomerSession();
-    this.close();
-    this.router.navigate(['/customer/dashboard']);
-  }
-
   get userInitials(): string {
     const user = this.authService.currentUserValue;
     if (!user) return 'BW';

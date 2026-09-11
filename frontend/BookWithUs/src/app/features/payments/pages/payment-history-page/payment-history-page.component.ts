@@ -7,6 +7,8 @@ import { StatusBadgeComponent } from '../../../../shared/components/status-badge
 import { LoadingSpinnerComponent } from '../../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../../shared/components/empty-state/empty-state.component';
 
+import { AuthService } from '../../../../core/services/auth/auth.service';
+
 @Component({
   selector: 'app-payment-history-page',
   standalone: true,
@@ -16,6 +18,7 @@ import { EmptyStateComponent } from '../../../../shared/components/empty-state/e
 })
 export class PaymentHistoryPageComponent implements OnInit {
   private paymentService = inject(PaymentService);
+  private authService = inject(AuthService);
   private router = inject(Router);
 
   payments: PaymentHistoryDto[] = [];
@@ -27,18 +30,35 @@ export class PaymentHistoryPageComponent implements OnInit {
 
   loadPaymentHistory(): void {
     this.isLoading = true;
-    this.paymentService.getCustomerPayments().subscribe({
+    const customerId = this.authService.getCustomerId() || 1;
+    this.paymentService.getCustomerPayments(customerId).subscribe({
       next: (data: PaymentHistoryDto[]) => {
-        this.payments = data;
+        this.payments = data || [];
         this.isLoading = false;
       },
       error: () => {
+        this.payments = [];
         this.isLoading = false;
       }
     });
   }
 
+  getPaymentMethodName(method: any): string {
+    if (method === 1 || method === '1' || method === 'Card') return 'Credit / Debit Card';
+    if (method === 2 || method === '2' || method === 'MobileWallet') return 'Mobile Wallet';
+    if (method === 3 || method === '3' || method === 'NetBanking') return 'Net Banking';
+    if (method === 4 || method === '4' || method === 'LankaQr') return 'LankaQR';
+    return String(method || 'Card');
+  }
+
+  getPaymentStatusName(status: any): string {
+    if (status === 0 || status === '0' || status === 'Pending') return 'Pending';
+    if (status === 1 || status === '1' || status === 'Completed') return 'Completed';
+    if (status === 2 || status === '2' || status === 'Failed') return 'Failed';
+    return String(status || 'Completed');
+  }
+
   viewReceipt(payment: PaymentHistoryDto): void {
-    this.router.navigate(['/receipt', payment.bookingId]);
+    this.router.navigate(['/receipt', payment.paymentId]);
   }
 }

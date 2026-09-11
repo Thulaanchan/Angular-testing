@@ -81,9 +81,14 @@ export interface EventQueryParametersDto {
   page?: number;
   pageSize?: number;
   searchTerm?: string;
+  search?: string;
+  category?: number;
   categoryId?: number;
+  venue?: number;
   venueId?: number;
   startDate?: string;
+  date?: string;
+  time?: string;
   endDate?: string;
   includePast?: boolean;
   sortBy?: string;

@@ -1,4 +1,4 @@
-﻿using EventParkingReservationSystem.API.Data.Context;
+using EventParkingReservationSystem.API.Data.Context;
 using EventParkingReservationSystem.API.Enums.Bookings;
 using EventParkingReservationSystem.API.Interfaces.Repositories.Bookings;
 using EventParkingReservationSystem.API.Models.Entities.Bookings;
@@ -108,6 +108,23 @@ public class BookingRepository : IBookingRepository
             .OrderByDescending(
                 b => b.CreatedAt)
 
+            .ToListAsync();
+    }
+
+    // =====================================================
+    // GET ALL BOOKINGS (ADMIN)
+    // =====================================================
+    public async Task<IReadOnlyList<Booking>> GetAllAsync()
+    {
+        return await _context.Bookings
+            .Include(b => b.Customer)
+            .Include(b => b.Event)
+                .ThenInclude(e => e.Venue)
+            .Include(b => b.BookingSeats)
+                .ThenInclude(bs => bs.Seat)
+            .Include(b => b.ParkingReservation)
+                .ThenInclude(pr => pr!.ParkingSlot)
+            .OrderByDescending(b => b.CreatedAt)
             .ToListAsync();
     }
 

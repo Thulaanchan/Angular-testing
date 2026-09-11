@@ -1,6 +1,7 @@
 using System.Text;
 
 using EventParkingReservationSystem.API.Configurations.Booking;
+using EventParkingReservationSystem.API.Data;
 using EventParkingReservationSystem.API.Data.Context;
 
 using EventParkingReservationSystem.API.Interfaces.Repositories.Bookings;
@@ -344,7 +345,7 @@ builder.Services.AddCors(options =>
         policy =>
         {
             policy
-                .WithOrigins("http://localhost:4200")
+                .WithOrigins("http://localhost:4200", "https://localhost:4200")
                 .AllowAnyHeader()
                 .AllowAnyMethod();
         });
@@ -386,6 +387,11 @@ builder.Services.AddSwaggerGen(options =>
 var app = builder.Build();
 
 //
+// Migrate and Seed Database
+//
+await DbSeeder.SeedAsync(app.Services);
+
+//
 // HTTP request pipeline
 //
 if (app.Environment.IsDevelopment())
@@ -394,9 +400,12 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
 app.UseCors("AngularDevClient");
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 

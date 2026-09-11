@@ -22,4 +22,25 @@ export class AuthSessionService {
   public get isAdmin(): boolean {
     return this.authService.isAdmin();
   }
+
+  public get token(): string | null {
+    return this.authService.getToken();
+  }
+
+  public get customerId(): number | null {
+    return this.authService.getCustomerId();
+  }
+
+  public get role(): string | null {
+    return this.authService.currentUserValue?.role ? String(this.authService.currentUserValue.role) : null;
+  }
+
+  public get claims() {
+    const token = this.authService.getToken();
+    return token ? this.authService.parseTokenClaims(token) : null;
+  }
+
+  public logout(): void {
+    this.authService.logout();
+  }
 }

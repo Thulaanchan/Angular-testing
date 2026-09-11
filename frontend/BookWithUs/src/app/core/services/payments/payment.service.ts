@@ -9,6 +9,7 @@ import { MockDataService } from '../mock-data.service';
 import { PaymentStatus } from '../../models/payments/payment-status.model';
 import { PaymentMethod } from '../../models/payments/payment-method.model';
 import { BookingStatus } from '../../models/bookings/booking-status.model';
+import { AuthService } from '../auth/auth.service';
 
 @Injectable({
   providedIn: 'root'
@@ -16,52 +17,44 @@ import { BookingStatus } from '../../models/bookings/booking-status.model';
 export class PaymentService {
   private http = inject(HttpClient);
   private mockData = inject(MockDataService);
+  private authService = inject(AuthService);
 
   getBookingPayment(bookingId: number): Observable<BookingPaymentDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<BookingPaymentDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.payments.bookingPayment(bookingId)}`).pipe(
-        catchError(() => of(this.getMockBookingPayment(bookingId)))
-      );
+      return this.http.get<BookingPaymentDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.payments.bookingPayment(bookingId)}`);
     }
     return of(this.getMockBookingPayment(bookingId));
   }
 
   processPayment(bookingId: number, request: ProcessPaymentRequestDto): Observable<PaymentResultDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.post<PaymentResultDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.payments.bookingPayment(bookingId)}`, request).pipe(
-        catchError(() => of(this.processMockPayment(bookingId, request)))
-      );
+      return this.http.post<PaymentResultDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.payments.bookingPayment(bookingId)}`, request);
     }
     return of(this.processMockPayment(bookingId, request));
   }
 
-  getCustomerPaymentHistory(customerId: number): Observable<PaymentHistoryDto[]> {
+  getCustomerPaymentHistory(customerId?: number): Observable<PaymentHistoryDto[]> {
+    const targetId = customerId || this.authService.getCustomerId() || 1;
     if (!API_CONFIG.useMockData) {
-      return this.http.get<PaymentHistoryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.payments.customerHistory(customerId)}`).pipe(
-        catchError(() => of(this.mockData.payments))
-      );
+      return this.http.get<PaymentHistoryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.payments.customerHistory(targetId)}`);
     }
     return of(this.mockData.payments);
   }
 
-  getCustomerPayments(customerId: number = 1): Observable<PaymentHistoryDto[]> {
+  getCustomerPayments(customerId?: number): Observable<PaymentHistoryDto[]> {
     return this.getCustomerPaymentHistory(customerId);
   }
 
   getReceipt(paymentId: number): Observable<PaymentReceiptDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<PaymentReceiptDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.payments.receipt(paymentId)}`).pipe(
-        catchError(() => of(this.getMockReceipt(paymentId)))
-      );
+      return this.http.get<PaymentReceiptDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.payments.receipt(paymentId)}`);
     }
     return of(this.getMockReceipt(paymentId));
   }
 
   getAllPayments(): Observable<PaymentHistoryDto[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<PaymentHistoryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.payments.all}`).pipe(
-        catchError(() => of(this.mockData.payments))
-      );
+      return this.http.get<PaymentHistoryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.payments.all}`);
     }
     return of(this.mockData.payments);
   }

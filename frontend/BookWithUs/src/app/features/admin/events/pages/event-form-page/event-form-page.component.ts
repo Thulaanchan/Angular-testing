@@ -29,26 +29,42 @@ export class EventFormPageComponent implements OnInit {
   eventId: number | null = null;
   isLoading = false;
   errorMessage = '';
+  selectedPosterFile: File | null = null;
+  posterPreviewUrl: string | null = null;
 
   categories: CategoryDto[] = [];
   venues: VenueDto[] = [];
 
   eventForm: FormGroup = this.fb.group({
-    title: ['', [Validators.required, Validators.minLength(5)]],
-    categoryId: [1, [Validators.required]],
-    venueId: [1, [Validators.required]],
+    name: ['', [Validators.required, Validators.minLength(3)]],
+    categoryId: [null, [Validators.required]],
+    venueId: [null, [Validators.required]],
     eventDate: ['2026-10-24', [Validators.required]],
     startTime: ['19:30', [Validators.required]],
     endTime: ['23:00', [Validators.required]],
-    baseTicketPrice: [85.00, [Validators.required, Validators.min(1)]],
-    posterImageUrl: ['https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=800&q=80', [Validators.required]],
-    description: ['', [Validators.required, Validators.minLength(20)]],
-    stageLayout: ['EndStage'] // 'EndStage' | 'CenterStage' | 'Theatre'
+    ticketPrice: [3500, [Validators.required, Validators.min(0)]],
+    capacity: [1000, [Validators.required, Validators.min(1)]],
+    description: ['', [Validators.maxLength(3000)]],
+    stageLayout: ['EndStage']
   });
 
   ngOnInit(): void {
-    this.categoryService.getCategories().subscribe(res => this.categories = res);
-    this.venueService.getVenues().subscribe(res => this.venues = res);
+    this.categoryService.getCategories().subscribe(res => {
+      this.categories = res;
+      if (!this.eventForm.get('categoryId')?.value && res.length > 0) {
+        this.eventForm.patchValue({ categoryId: res[0].id });
+      }
+    });
+
+    this.venueService.getVenues().subscribe(res => {
+      this.venues = res;
+      if (!this.eventForm.get('venueId')?.value && res.length > 0) {
+        this.eventForm.patchValue({
+          venueId: res[0].id,
+          capacity: res[0].totalCapacity || res[0].capacity || 1000
+        });
+      }
+    });
 
     const id = this.route.snapshot.paramMap.get('id');
     if (id) {
@@ -59,19 +75,51 @@ export class EventFormPageComponent implements OnInit {
   }
 
   loadEvent(id: number): void {
+    this.isLoading = true;
     this.eventService.getEventById(id).subscribe({
       next: (ev) => {
         this.eventForm.patchValue({
-          title: ev.title,
+          name: ev.name || ev.title,
           categoryId: ev.categoryId,
           venueId: ev.venueId,
-          eventDate: ev.eventDate.split('T')[0],
-          baseTicketPrice: ev.baseTicketPrice,
-          posterImageUrl: ev.posterImageUrl,
-          description: ev.description
+          eventDate: ev.eventDate ? ev.eventDate.split('T')[0] : '',
+          startTime: ev.startTime ? ev.startTime.slice(0, 5) : '19:00',
+          endTime: ev.endTime ? ev.endTime.slice(0, 5) : '23:00',
+          ticketPrice: ev.ticketPrice ?? ev.baseTicketPrice ?? 1000,
+          capacity: ev.capacity ?? ev.totalSeats ?? 1000,
+          stageLayout: ev.stageLayout || 'EndStage',
+          description: ev.description || ''
         });
+        if (ev.posterUrl || ev.posterImageUrl) {
+          this.posterPreviewUrl = ev.posterUrl || ev.posterImageUrl || null;
+        }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err.error?.message || err.message || 'Failed to load event details.';
       }
     });
+  }
+
+  onVenueChange(): void {
+    const venueId = Number(this.eventForm.get('venueId')?.value);
+    const selected = this.venues.find(v => v.id === venueId);
+    if (selected && !this.isEditMode) {
+      this.eventForm.patchValue({ capacity: selected.totalCapacity || selected.capacity || 1000 });
+    }
+  }
+
+  onFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files.length > 0) {
+      this.selectedPosterFile = input.files[0];
+      const reader = new FileReader();
+      reader.onload = () => {
+        this.posterPreviewUrl = reader.result as string;
+      };
+      reader.readAsDataURL(this.selectedPosterFile);
+    }
   }
 
   onSubmit(): void {
@@ -81,11 +129,29 @@ export class EventFormPageComponent implements OnInit {
     }
 
     this.isLoading = true;
+    this.errorMessage = '';
     const formVal = this.eventForm.value;
 
+    const formData = new FormData();
+    formData.append('Name', formVal.name.trim());
+    formData.append('Description', (formVal.description || '').trim());
+    formData.append('VenueId', formVal.venueId.toString());
+    formData.append('CategoryId', formVal.categoryId.toString());
+    formData.append('EventDate', formVal.eventDate);
+    formData.append('StartTime', formVal.startTime.length === 5 ? formVal.startTime + ':00' : formVal.startTime);
+    formData.append('EndTime', formVal.endTime.length === 5 ? formVal.endTime + ':00' : formVal.endTime);
+    formData.append('TicketPrice', formVal.ticketPrice.toString());
+    formData.append('Capacity', formVal.capacity.toString());
+    if (formVal.stageLayout) {
+      formData.append('StageLayout', formVal.stageLayout);
+    }
+    if (this.selectedPosterFile) {
+      formData.append('Poster', this.selectedPosterFile, this.selectedPosterFile.name);
+    }
+
     const op = this.isEditMode && this.eventId
-      ? this.eventService.updateEvent(this.eventId, formVal)
-      : this.eventService.createEvent(formVal);
+      ? this.eventService.updateEvent(this.eventId, formData)
+      : this.eventService.createEvent(formData);
 
     op.subscribe({
       next: () => {
@@ -94,7 +160,7 @@ export class EventFormPageComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.message || 'Failed to save event.';
+        this.errorMessage = err.error?.message || err.message || 'Failed to save event.';
       }
     });
   }

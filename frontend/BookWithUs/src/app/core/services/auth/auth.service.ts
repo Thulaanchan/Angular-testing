@@ -12,6 +12,7 @@ import { ResendVerificationRequestDto } from '../../models/auth/resend-verificat
 import { ResetPasswordRequestDto } from '../../models/auth/reset-password-request.model';
 import { ForgotPasswordRequestDto } from '../../models/auth/forgot-password-request.model';
 import { AuthUser } from '../../models/auth/auth-user.model';
+import { JwtPayload } from '../../models/auth/auth-session.model';
 import { CustomerDto } from '../../models/customers/customer.model';
 
 const TOKEN_KEY = 'bookwithus_token';
@@ -26,10 +27,7 @@ export class AuthService {
   public currentUser$ = this.currentUserSubject.asObservable();
 
   constructor() {
-    // If no user stored, initialize with a default demo customer session for seamless exploration
-    if (!this.currentUserSubject.value) {
-      this.setDemoCustomerSession();
-    }
+    // Rely on stored user token in localStorage
   }
 
   public get currentUserValue(): AuthUser | null {
@@ -37,12 +35,23 @@ export class AuthService {
   }
 
   public isAuthenticated(): boolean {
-    return !!this.getToken();
+    const token = this.getToken();
+    if (!token) return false;
+    if (this.isTokenExpired(token)) {
+      this.logout();
+      return false;
+    }
+    return true;
   }
 
   public isAdmin(): boolean {
     const user = this.currentUserSubject.value;
     return !!user && (user.role === 'Administrator' || (user as any).roleName === 'Administrator');
+  }
+
+  public isCustomer(): boolean {
+    const user = this.currentUserSubject.value;
+    return !!user && (user.role === 'Customer' || (user as any).roleName === 'Customer' || !this.isAdmin());
   }
 
   public getCustomerId(): number | null {
@@ -54,14 +63,14 @@ export class AuthService {
   }
 
   login(request: LoginRequestDto): Observable<LoginResponseDto> {
-    // Check if live API is preferred
     if (!API_CONFIG.useMockData) {
-      return this.http.post<AuthResponseDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.auth.login}`, request).pipe(
-        tap(response => this.handleAuthSuccess(response)),
-        catchError(err => {
-          // Fall back to mock on connection error
-          return this.mockLogin(request);
-        })
+      const payload: LoginRequestDto = {
+        email: request.email.trim(),
+        password: request.password,
+        rememberMe: !!request.rememberMe
+      };
+      return this.http.post<AuthResponseDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.auth.login}`, payload).pipe(
+        tap(response => this.handleAuthSuccess(response))
       );
     }
     return this.mockLogin(request);
@@ -111,9 +120,15 @@ export class AuthService {
 
   register(request: RegisterRequestDto): Observable<CustomerDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.post<CustomerDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.customers.register}`, request).pipe(
-        catchError(() => this.mockRegister(request))
-      );
+      const payload = {
+        firstName: request.firstName?.trim() || '',
+        lastName: request.lastName?.trim() || '',
+        email: request.email?.trim() || '',
+        phone: request.phone?.trim() || request.phoneNumber?.trim() || null,
+        password: request.password,
+        confirmPassword: request.confirmPassword || request.password
+      };
+      return this.http.post<CustomerDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.customers.register}`, payload);
     }
     return this.mockRegister(request);
   }
@@ -139,43 +154,34 @@ export class AuthService {
 
   verifyEmail(request: VerifyEmailRequestDto): Observable<{ message: string }> {
     if (!API_CONFIG.useMockData) {
-      return this.http.post<{ message: string }>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.auth.verifyEmail}`, request).pipe(
-        catchError(() => of({ message: 'Email verified successfully. You can now sign in.' }))
-      );
+      return this.http.post<{ message: string }>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.auth.verifyEmail}`, request);
     }
     return of({ message: 'Email verified successfully. You can now sign in.' });
   }
 
   resendVerification(request: ResendVerificationRequestDto): Observable<{ message: string }> {
     if (!API_CONFIG.useMockData) {
-      return this.http.post<{ message: string }>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.auth.resendVerification}`, request).pipe(
-        catchError(() => of({ message: 'If an unverified account exists for this email, a verification email has been sent.' }))
-      );
+      return this.http.post<{ message: string }>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.auth.resendVerification}`, request);
     }
     return of({ message: 'If an unverified account exists for this email, a verification email has been sent.' });
   }
 
   forgotPassword(request: ForgotPasswordRequestDto): Observable<{ message: string }> {
     if (!API_CONFIG.useMockData) {
-      return this.http.post<{ message: string }>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.auth.forgotPassword}`, request).pipe(
-        catchError(() => of({ message: 'If an account exists for this email, a password reset link has been sent.' }))
-      );
+      return this.http.post<{ message: string }>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.auth.forgotPassword}`, request);
     }
     return of({ message: 'If an account exists for this email, a password reset link has been sent.' });
   }
 
   resetPassword(request: ResetPasswordRequestDto): Observable<{ message: string }> {
     if (!API_CONFIG.useMockData) {
-      return this.http.post<{ message: string }>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.auth.resetPassword}`, request).pipe(
-        catchError(() => of({ message: 'Your password has been reset successfully.' }))
-      );
+      return this.http.post<{ message: string }>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.auth.resetPassword}`, request);
     }
     return of({ message: 'Your password has been reset successfully.' });
   }
 
   logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(USER_KEY);
+    this.clearStorage();
     this.currentUserSubject.next(null);
   }
 
@@ -217,13 +223,44 @@ export class AuthService {
     }
   }
 
+  public parseTokenClaims(token: string): JwtPayload | null {
+    try {
+      const parts = token.split('.');
+      if (parts.length !== 3) return null;
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join('')
+      );
+      return JSON.parse(jsonPayload) as JwtPayload;
+    } catch {
+      return null;
+    }
+  }
+
+  public isTokenExpired(token: string): boolean {
+    const claims = this.parseTokenClaims(token);
+    if (!claims || !claims.exp) return true;
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    return claims.exp <= nowInSeconds;
+  }
+
+  public getTokenExpirationDate(token: string): Date | null {
+    const claims = this.parseTokenClaims(token);
+    if (!claims || !claims.exp) return null;
+    return new Date(claims.exp * 1000);
+  }
+
   private handleAuthSuccess(response: LoginResponseDto): void {
     const user: AuthUser = {
-      id: response.userId || response.customerId || response.id || 1,
-      customerId: response.customerId,
+      id: response.userId || (response as any).customerId || (response as any).id || 1,
+      customerId: response.role === 'Customer' ? (response.userId || (response as any).customerId || (response as any).id || 1) : undefined,
       email: response.email,
-      displayName: response.fullName || response.displayName || 'User',
-      fullName: response.fullName || response.displayName,
+      displayName: response.displayName || response.fullName || 'User',
+      fullName: response.displayName || response.fullName,
       role: response.role,
       token: response.token
     };
@@ -234,10 +271,53 @@ export class AuthService {
 
   private loadStoredUser(): AuthUser | null {
     try {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (!token) {
+        return null;
+      }
+
+      if (this.isTokenExpired(token)) {
+        this.clearStorage();
+        return null;
+      }
+
       const stored = localStorage.getItem(USER_KEY);
-      return stored ? JSON.parse(stored) : null;
+      if (stored) {
+        const user = JSON.parse(stored) as AuthUser;
+        user.token = token;
+        return user;
+      }
+
+      return this.createUserFromToken(token);
     } catch {
+      this.clearStorage();
       return null;
     }
+  }
+
+  private createUserFromToken(token: string): AuthUser | null {
+    const claims = this.parseTokenClaims(token);
+    if (!claims) return null;
+
+    const userIdStr = claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || claims['nameid'] || claims['sub'];
+    const email = claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || claims['email'] || '';
+    const displayName = claims['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name'] || claims['name'] || 'User';
+    const role = claims['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] || claims['role'] || 'Customer';
+    const userId = userIdStr ? parseInt(userIdStr, 10) : 0;
+
+    return {
+      id: userId,
+      customerId: role === 'Customer' ? userId : undefined,
+      email,
+      displayName,
+      fullName: displayName,
+      role,
+      token
+    };
+  }
+
+  private clearStorage(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
   }
 }

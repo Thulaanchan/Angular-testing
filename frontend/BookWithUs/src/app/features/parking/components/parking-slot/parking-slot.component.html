@@ -1,0 +1,28 @@
+<button
+  type="button"
+  (click)="onSelect()"
+  (mouseenter)="onHover()"
+  (mouseleave)="onLeave()"
+  [disabled]="slot.status !== 'Available'"
+  [attr.aria-label]="slot.slotCode | slotCode"
+  [title]="(slot.slotCode | slotCode) + ' - ' + slot.zoneName + ' - LKR ' + (slot.fee | number:'1.2-2')"
+  [ngClass]="{
+    'bg-purple-600 border-purple-700 text-white ring-2 ring-purple-300 scale-105 shadow-md': isSelected,
+    'bg-emerald-50/50 border-emerald-200 text-slate-800 hover:border-purple-400 cursor-pointer': !isSelected && slot.status === 'Available',
+    'bg-amber-50 border-amber-300 text-amber-800 cursor-not-allowed opacity-75': slot.status === 'Held',
+    'bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed': slot.status === 'Occupied' || slot.status === 'Reserved'
+  }"
+  class="p-3 rounded-xl border flex flex-col items-center justify-between text-center transition-all min-h-[82px] w-full">
+  <span class="font-mono text-xs font-black">{{ slot.slotCode | slotCode }}</span>
+  <span class="text-[10px] opacity-80 uppercase tracking-tight line-clamp-1">{{ slot.zoneName }}</span>
+  <span
+    class="text-[10px] font-semibold mt-1"
+    [ngClass]="{
+      'text-purple-100': isSelected,
+      'text-emerald-700': !isSelected && slot.status === 'Available',
+      'text-amber-800': slot.status === 'Held',
+      'text-slate-400': slot.status === 'Occupied' || slot.status === 'Reserved'
+    }">
+    {{ isSelected ? 'Selected' : (slot.status === 'Available' ? (slot.fee | currency:'LKR':'symbol':'1.0-0') : (slot.status === 'Held' ? 'Held' : 'Taken')) }}
+  </span>
+</button>

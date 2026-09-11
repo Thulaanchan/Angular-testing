@@ -6,6 +6,8 @@ export interface AuthUser {
   email: string;
   displayName?: string;
   fullName?: string;
+  firstName?: string;
+  lastName?: string;
   phoneNumber?: string;
   role: AppRole | string;
   token?: string;

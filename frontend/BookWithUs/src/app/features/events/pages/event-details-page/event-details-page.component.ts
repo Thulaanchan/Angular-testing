@@ -73,4 +73,24 @@ export class EventDetailsPageComponent implements OnInit {
     this.bookingState.setTicketRequirements(this.adultCount, this.childCount);
     this.router.navigate(['/booking/seats']);
   }
+
+  formatTime(timeStr?: string): string {
+    if (!timeStr) return '';
+    try {
+      const parts = timeStr.split(':');
+      if (parts.length < 2) return timeStr;
+      let hours = parseInt(parts[0], 10);
+      const minutes = parts[1];
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = hours % 12;
+      hours = hours ? hours : 12;
+      return `${hours}:${minutes} ${ampm}`;
+    } catch {
+      return timeStr;
+    }
+  }
+
+  onImgError(event: Event): void {
+    (event.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=1200&q=80';
+  }
 }

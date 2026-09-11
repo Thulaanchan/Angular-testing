@@ -16,9 +16,7 @@ export class ParkingService {
 
   getEventParkingSlots(eventId: number): Observable<ParkingAvailabilityDto[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<ParkingAvailabilityDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.parking.byEvent(eventId)}`).pipe(
-        catchError(() => of(this.mockData.generateParkingSlotsForEvent(eventId)))
-      );
+      return this.http.get<ParkingAvailabilityDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.parking.byEvent(eventId)}`);
     }
     return of(this.mockData.generateParkingSlotsForEvent(eventId));
   }
@@ -29,9 +27,7 @@ export class ParkingService {
 
   getParkingSlotById(id: number): Observable<ParkingSlotDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<ParkingSlotDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.parking.byId(id)}`).pipe(
-        catchError(() => of(this.getMockSlot(id)))
-      );
+      return this.http.get<ParkingSlotDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.parking.byId(id)}`);
     }
     return of(this.getMockSlot(id));
   }
@@ -52,11 +48,30 @@ export class ParkingService {
 
   getEventParkingZones(eventId: number): Observable<any[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<any[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.parking.zones(eventId)}`).pipe(
-        catchError(() => of(this.getMockZones()))
-      );
+      return this.http.get<any[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.parking.zones(eventId)}`);
     }
     return of(this.getMockZones());
+  }
+
+  createParkingSlot(eventId: number, request: CreateParkingSlotRequest): Observable<ParkingSlotDto> {
+    if (!API_CONFIG.useMockData) {
+      return this.http.post<ParkingSlotDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.parking.byEvent(eventId)}`, request);
+    }
+    return of({ ...this.getMockSlot(999), slotCode: request.slotCode });
+  }
+
+  updateParkingSlot(id: number, request: UpdateParkingSlotRequestDto): Observable<ParkingSlotDto> {
+    if (!API_CONFIG.useMockData) {
+      return this.http.put<ParkingSlotDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.parking.byId(id)}`, request);
+    }
+    return of({ ...this.getMockSlot(id), slotCode: request.slotCode });
+  }
+
+  deleteParkingSlot(id: number): Observable<void> {
+    if (!API_CONFIG.useMockData) {
+      return this.http.delete<void>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.parking.byId(id)}`);
+    }
+    return of(void 0);
   }
 
   updateParkingFee(eventId: number, newFee: number): Observable<any> {

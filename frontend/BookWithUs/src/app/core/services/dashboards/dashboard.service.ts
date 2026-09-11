@@ -16,36 +16,28 @@ export class DashboardService {
 
   getAdminSummary(): Observable<AdminDashboardSummaryDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<AdminDashboardSummaryDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.dashboards.adminSummary}`).pipe(
-        catchError(() => of(this.getMockAdminSummary()))
-      );
+      return this.http.get<AdminDashboardSummaryDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.dashboards.adminSummary}`);
     }
     return of(this.getMockAdminSummary());
   }
 
   getUpcomingEvents(): Observable<UpcomingEventDto[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<UpcomingEventDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.dashboards.adminUpcomingEvents}`).pipe(
-        catchError(() => of(this.getMockUpcomingEvents()))
-      );
+      return this.http.get<UpcomingEventDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.dashboards.adminUpcomingEvents}`);
     }
     return of(this.getMockUpcomingEvents());
   }
 
   getRecentBookings(): Observable<RecentBookingDto[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<RecentBookingDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.dashboards.adminRecentBookings}`).pipe(
-        catchError(() => of(this.getMockRecentBookings()))
-      );
+      return this.http.get<RecentBookingDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.dashboards.adminRecentBookings}`);
     }
     return of(this.getMockRecentBookings());
   }
 
   getCustomerSummary(): Observable<CustomerDashboardSummaryDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<CustomerDashboardSummaryDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.dashboards.customerSummary}`).pipe(
-        catchError(() => of(this.getMockCustomerSummary()))
-      );
+      return this.http.get<CustomerDashboardSummaryDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.dashboards.customerSummary}`);
     }
     return of(this.getMockCustomerSummary());
   }

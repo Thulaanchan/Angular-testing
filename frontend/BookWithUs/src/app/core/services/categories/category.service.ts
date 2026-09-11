@@ -16,48 +16,35 @@ export class CategoryService {
 
   getCategories(): Observable<CategoryDto[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<CategoryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.categories.base}`).pipe(
-        catchError(() => of(this.mockData.categories))
-      );
+      return this.http.get<CategoryDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.categories.base}`);
     }
     return of(this.mockData.categories);
   }
 
   getCategoryById(id: number): Observable<CategoryDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<CategoryDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.categories.byId(id)}`).pipe(
-        catchError(() => of(this.mockData.categories.find(c => c.id === id) || this.mockData.categories[0]))
-      );
+      return this.http.get<CategoryDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.categories.byId(id)}`);
     }
     return of(this.mockData.categories.find(c => c.id === id) || this.mockData.categories[0]);
   }
 
   createCategory(request: CreateCategoryDto): Observable<CategoryDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.post<CategoryDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.categories.base}`, request).pipe(
-        catchError(() => of(this.createMockCategory(request)))
-      );
+      return this.http.post<CategoryDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.categories.base}`, request);
     }
     return of(this.createMockCategory(request));
   }
 
   updateCategory(id: number, request: UpdateCategoryDto): Observable<CategoryDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.put<CategoryDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.categories.byId(id)}`, request).pipe(
-        catchError(() => of(this.updateMockCategory(id, request)))
-      );
+      return this.http.put<CategoryDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.categories.byId(id)}`, request);
     }
     return of(this.updateMockCategory(id, request));
   }
 
   deleteCategory(id: number): Observable<void> {
     if (!API_CONFIG.useMockData) {
-      return this.http.delete<void>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.categories.byId(id)}`).pipe(
-        catchError(() => {
-          this.mockData.categories = this.mockData.categories.filter(c => c.id !== id);
-          return of(void 0);
-        })
-      );
+      return this.http.delete<void>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.categories.byId(id)}`);
     }
     this.mockData.categories = this.mockData.categories.filter(c => c.id !== id);
     return of(void 0);

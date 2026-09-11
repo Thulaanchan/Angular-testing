@@ -3,16 +3,17 @@ import { CommonModule } from '@angular/common';
 import { RouterModule, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { VenueService } from '../../../../../core/services/venues/venue.service';
-import { VenueDto, VenueDetailDto } from '../../../../../core/models/venues/venue.model';
+import { VenueDto } from '../../../../../core/models/venues/venue.model';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { LoadingSpinnerComponent } from '../../../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
 import { ModalComponent } from '../../../../../shared/components/modal/modal.component';
+import { AlertBannerComponent } from '../../../../../shared/components/alert-banner/alert-banner.component';
 
 @Component({
   selector: 'app-venue-management-page',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, StatusBadgeComponent, LoadingSpinnerComponent, EmptyStateComponent, ModalComponent],
+  imports: [CommonModule, RouterModule, FormsModule, StatusBadgeComponent, LoadingSpinnerComponent, EmptyStateComponent, ModalComponent, AlertBannerComponent],
   templateUrl: './venue-management-page.component.html',
   styleUrls: ['./venue-management-page.component.css']
 })
@@ -23,6 +24,8 @@ export class VenueManagementPageComponent implements OnInit {
   venues: VenueDto[] = [];
   isLoading = true;
   searchTerm = '';
+  errorMessage = '';
+  successMessage = '';
 
   selectedVenue: VenueDto | null = null;
   showDetailsModal = false;
@@ -40,13 +43,15 @@ export class VenueManagementPageComponent implements OnInit {
 
   loadVenues(): void {
     this.isLoading = true;
+    this.errorMessage = '';
     this.venueService.getVenues().subscribe({
       next: (data) => {
         this.venues = data;
         this.isLoading = false;
       },
-      error: () => {
+      error: (err) => {
         this.isLoading = false;
+        this.errorMessage = err.error?.message || err.message || 'Failed to load venues.';
       }
     });
   }
@@ -56,7 +61,7 @@ export class VenueManagementPageComponent implements OnInit {
     const q = this.searchTerm.toLowerCase();
     return this.venues.filter(v =>
       v.name.toLowerCase().includes(q) ||
-      (v.location || v.address || '').toLowerCase().includes(q)
+      (v.address || v.location || '').toLowerCase().includes(q)
     );
   }
 
@@ -69,12 +74,16 @@ export class VenueManagementPageComponent implements OnInit {
   checkVenueAvailability(): void {
     if (!this.selectedVenue) return;
     this.isCheckingAvailability = true;
-    const venueId = this.selectedVenue.venueId || this.selectedVenue.id;
+    this.availabilityResult = null;
+    const venueId = this.selectedVenue.id;
+    const start = this.checkStartTime.length === 5 ? this.checkStartTime + ':00' : this.checkStartTime;
+    const end = this.checkEndTime.length === 5 ? this.checkEndTime + ':00' : this.checkEndTime;
+
     this.venueService.checkAvailability(
       venueId,
       this.checkDate,
-      this.checkStartTime,
-      this.checkEndTime
+      start,
+      end
     ).subscribe({
       next: (res) => {
         this.availabilityResult = {
@@ -83,9 +92,33 @@ export class VenueManagementPageComponent implements OnInit {
         };
         this.isCheckingAvailability = false;
       },
-      error: () => {
-        this.availabilityResult = { isAvailable: true, message: 'Venue is available for booking on this date.' };
+      error: (err) => {
+        this.availabilityResult = {
+          isAvailable: false,
+          message: err.error?.message || 'Error checking venue availability.'
+        };
         this.isCheckingAvailability = false;
+      }
+    });
+  }
+
+  deleteVenue(venue: VenueDto): void {
+    if (!confirm(`Are you sure you want to delete venue "${venue.name}"?`)) {
+      return;
+    }
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.venueService.deleteVenue(venue.id).subscribe({
+      next: () => {
+        this.successMessage = `Venue "${venue.name}" deleted successfully.`;
+        this.loadVenues();
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          this.errorMessage = `Cannot delete venue "${venue.name}" because it has scheduled events or bookings.`;
+        } else {
+          this.errorMessage = err.error?.message || err.message || `Failed to delete venue "${venue.name}".`;
+        }
       }
     });
   }

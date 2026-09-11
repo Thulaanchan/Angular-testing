@@ -13,52 +13,86 @@
   }
 
   <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs">
-    <form [formGroup]="venueForm" (ngSubmit)="onSubmit()" class="space-y-5">
+    <form #venueForm="ngForm" (ngSubmit)="onSubmit(venueForm)" class="space-y-5" novalidate>
       <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Venue Name</label>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Venue Name <span class="text-red-500">*</span></label>
         <input
           type="text"
-          formControlName="name"
+          name="name"
+          #nameCtrl="ngModel"
+          [(ngModel)]="venue.name"
+          required
+          minlength="3"
+          maxlength="150"
           placeholder="e.g. Wembley Stadium"
-          class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
-        <app-form-error [control]="venueForm.get('name')" fieldName="Venue name"></app-form-error>
+          class="w-full px-4 py-2.5 text-xs bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600"
+          [class.border-red-400]="nameCtrl.invalid && nameCtrl.touched"
+          [class.border-slate-200]="!(nameCtrl.invalid && nameCtrl.touched)" />
+        @if (nameCtrl.invalid && nameCtrl.touched) {
+          <div class="mt-1 text-[11px] text-red-500">
+            @if (nameCtrl.errors?.['required']) {
+              Venue name is required.
+            } @else if (nameCtrl.errors?.['minlength']) {
+              Venue name must be at least 3 characters.
+            }
+          </div>
+        }
       </div>
 
       <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Full Address / Location</label>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Full Address / Location <span class="text-red-500">*</span></label>
         <input
           type="text"
-          formControlName="location"
+          name="address"
+          #addressCtrl="ngModel"
+          [(ngModel)]="venue.address"
+          required
+          minlength="5"
+          maxlength="300"
           placeholder="e.g. London HA9 0WS, United Kingdom"
-          class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
-        <app-form-error [control]="venueForm.get('location')" fieldName="Location"></app-form-error>
+          class="w-full px-4 py-2.5 text-xs bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600"
+          [class.border-red-400]="addressCtrl.invalid && addressCtrl.touched"
+          [class.border-slate-200]="!(addressCtrl.invalid && addressCtrl.touched)" />
+        @if (addressCtrl.invalid && addressCtrl.touched) {
+          <div class="mt-1 text-[11px] text-red-500">
+            @if (addressCtrl.errors?.['required']) {
+              Address is required.
+            } @else if (addressCtrl.errors?.['minlength']) {
+              Address must be at least 5 characters.
+            }
+          </div>
+        }
       </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Total Seat Capacity</label>
-          <input
-            type="number"
-            formControlName="capacity"
-            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
-          <app-form-error [control]="venueForm.get('capacity')" fieldName="Capacity"></app-form-error>
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Total Parking Stalls</label>
-          <input
-            type="number"
-            formControlName="parkingCapacity"
-            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
-          <app-form-error [control]="venueForm.get('parkingCapacity')" fieldName="Parking capacity"></app-form-error>
-        </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Total Seat Capacity <span class="text-red-500">*</span></label>
+        <input
+          type="number"
+          name="totalCapacity"
+          #capacityCtrl="ngModel"
+          [(ngModel)]="venue.totalCapacity"
+          required
+          min="1"
+          class="w-full px-4 py-2.5 text-xs bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600"
+          [class.border-red-400]="capacityCtrl.invalid && capacityCtrl.touched"
+          [class.border-slate-200]="!(capacityCtrl.invalid && capacityCtrl.touched)" />
+        @if (capacityCtrl.invalid && capacityCtrl.touched) {
+          <div class="mt-1 text-[11px] text-red-500">
+            @if (capacityCtrl.errors?.['required']) {
+              Total capacity is required.
+            } @else if (capacityCtrl.errors?.['min']) {
+              Capacity must be at least 1.
+            }
+          </div>
+        }
       </div>
 
       <div class="pt-2">
         <label class="inline-flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            formControlName="isActive"
+            name="isActive"
+            [(ngModel)]="venue.isActive"
             class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300" />
           <span class="text-xs font-medium text-slate-700">Venue is Active and Bookable</span>
         </label>

@@ -12,6 +12,14 @@
     </a>
   </div>
 
+  <!-- Alerts -->
+  @if (errorMessage) {
+    <app-alert-banner type="error" [message]="errorMessage" [dismissible]="true" (dismissed)="errorMessage = ''"></app-alert-banner>
+  }
+  @if (successMessage) {
+    <app-alert-banner type="success" [message]="successMessage" [dismissible]="true" (dismissed)="successMessage = ''"></app-alert-banner>
+  }
+
   <!-- Filter Bar -->
   <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
     <!-- Search -->
@@ -33,8 +41,8 @@
       (change)="onFilter()"
       class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 text-slate-700">
       <option [ngValue]="null">All Categories</option>
-      @for (cat of categories; track cat.categoryId) {
-        <option [ngValue]="cat.categoryId">{{ cat.name }}</option>
+      @for (cat of categories; track cat.id) {
+        <option [ngValue]="cat.id">{{ cat.name }}</option>
       }
     </select>
 
@@ -44,8 +52,8 @@
       (change)="onFilter()"
       class="px-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 text-slate-700">
       <option [ngValue]="null">All Venues</option>
-      @for (v of venues; track v.venueId) {
-        <option [ngValue]="v.venueId">{{ v.name }}</option>
+      @for (v of venues; track v.id) {
+        <option [ngValue]="v.id">{{ v.name }}</option>
       }
     </select>
   </div>
@@ -70,7 +78,7 @@
               <th class="py-3.5 px-4">Event</th>
               <th class="py-3.5 px-4">Category</th>
               <th class="py-3.5 px-4">Venue</th>
-              <th class="py-3.5 px-4">Date & Time</th>
+              <th class="py-3.5 px-4">Date</th>
               <th class="py-3.5 px-4 text-right">Base Price</th>
               <th class="py-3.5 px-4 text-center">Available Seats</th>
               <th class="py-3.5 px-4 text-center">Status</th>
@@ -78,46 +86,56 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            @for (ev of events; track ev.eventId) {
+            @for (ev of events; track ev.id) {
               <tr class="hover:bg-slate-50/50 transition cursor-pointer" (click)="viewEvent(ev)">
                 <td class="py-3.5 px-4">
                   <div class="flex items-center gap-3">
-                    <img [src]="ev.posterImageUrl" class="w-10 h-10 rounded-lg object-cover bg-slate-100 shrink-0" [alt]="ev.title" />
+                    <img
+                      [src]="ev.posterUrl || ev.posterImageUrl || 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=400&q=80'"
+                      (error)="onImgError($event)"
+                      class="w-10 h-10 rounded-lg object-cover bg-slate-100 shrink-0"
+                      [alt]="ev.name || ev.title" />
                     <div>
-                      <span class="font-bold text-slate-900 block max-w-xs truncate">{{ ev.title }}</span>
-                      <span class="text-[10px] text-slate-400">ID: #EVT-{{ ev.eventId }}</span>
+                      <span class="font-bold text-slate-900 block max-w-xs truncate">{{ ev.name || ev.title }}</span>
+                      <span class="text-[10px] text-slate-400">ID: #EVT-{{ ev.id }}</span>
                     </div>
                   </div>
                 </td>
                 <td class="py-3.5 px-4 text-slate-600">{{ ev.categoryName }}</td>
                 <td class="py-3.5 px-4 text-slate-600">{{ ev.venueName }}</td>
                 <td class="py-3.5 px-4 text-slate-500">{{ ev.eventDate | date:'mediumDate' }}</td>
-                <td class="py-3.5 px-4 text-right font-bold text-slate-900">${{ ev.baseTicketPrice | number:'1.2-2' }}</td>
+                <td class="py-3.5 px-4 text-right font-bold text-slate-900">LKR {{ (ev.ticketPrice || ev.baseTicketPrice) | number:'1.2-2' }}</td>
                 <td class="py-3.5 px-4 text-center">
                   <span class="px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
                     {{ ev.availableSeats }}
                   </span>
                 </td>
                 <td class="py-3.5 px-4 text-center">
-                  <app-status-badge [status]="ev.status" size="xs"></app-status-badge>
+                  <app-status-badge [status]="ev.status || 'Active'" size="xs"></app-status-badge>
                 </td>
                 <td class="py-3.5 px-4 text-right" (click)="$event.stopPropagation()">
                   <div class="flex items-center justify-end gap-1.5">
                     <a
-                      [routerLink]="['/admin/events', ev.eventId, 'seats']"
+                      [routerLink]="['/admin/events', ev.id, 'seats']"
                       class="px-2 py-1 bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold rounded-lg text-[11px] transition">
                       Seats
                     </a>
                     <a
-                      [routerLink]="['/admin/events', ev.eventId, 'parking']"
+                      [routerLink]="['/admin/events', ev.id, 'parking']"
                       class="px-2 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-semibold rounded-lg text-[11px] transition">
                       Parking
                     </a>
                     <a
-                      [routerLink]="['/admin/events', ev.eventId, 'edit']"
+                      [routerLink]="['/admin/events', ev.id, 'edit']"
                       class="px-2 py-1 text-slate-600 hover:bg-slate-100 font-semibold rounded-lg text-[11px] transition">
                       Edit
                     </a>
+                    <button
+                      type="button"
+                      (click)="deleteEvent(ev)"
+                      class="px-2 py-1 text-red-600 hover:bg-red-50 font-semibold rounded-lg text-[11px] transition">
+                      Delete
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -138,16 +156,20 @@
   <!-- Event Details Modal (AS-05 drawer) -->
   <app-modal
     [isOpen]="showDetailsModal"
-    [title]="selectedEvent?.title || 'Event Details'"
+    [title]="selectedEvent?.name || selectedEvent?.title || 'Event Details'"
     subtitle="Event Overview & Allocation Links"
     size="lg"
     (close)="showDetailsModal = false">
     @if (selectedEvent) {
       <div class="space-y-4 text-xs">
         <div class="flex gap-4 items-center">
-          <img [src]="selectedEvent.posterImageUrl" class="w-20 h-20 rounded-xl object-cover" [alt]="selectedEvent.title" />
+          <img
+            [src]="selectedEvent.posterUrl || selectedEvent.posterImageUrl || 'https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?auto=format&fit=crop&w=400&q=80'"
+            (error)="onImgError($event)"
+            class="w-20 h-20 rounded-xl object-cover"
+            [alt]="selectedEvent.name || selectedEvent.title" />
           <div>
-            <h3 class="font-bold text-slate-900 text-sm">{{ selectedEvent.title }}</h3>
+            <h3 class="font-bold text-slate-900 text-sm">{{ selectedEvent.name || selectedEvent.title }}</h3>
             <p class="text-slate-500">{{ selectedEvent.categoryName }} &bull; {{ selectedEvent.venueName }}</p>
             <p class="text-slate-500 mt-1">{{ selectedEvent.eventDate | date:'fullDate' }}</p>
           </div>
@@ -156,7 +178,7 @@
         <div class="grid grid-cols-3 gap-3 pt-2">
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
             <span class="text-slate-400 block text-[10px] uppercase">Base Ticket</span>
-            <span class="font-bold text-slate-900 text-base mt-0.5 block">${{ selectedEvent.baseTicketPrice | number:'1.2-2' }}</span>
+            <span class="font-bold text-slate-900 text-base mt-0.5 block">LKR {{ (selectedEvent.ticketPrice || selectedEvent.baseTicketPrice) | number:'1.2-2' }}</span>
           </div>
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
             <span class="text-slate-400 block text-[10px] uppercase">Seats Available</span>
@@ -164,7 +186,7 @@
           </div>
           <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
             <span class="text-slate-400 block text-[10px] uppercase">Event Status</span>
-            <span class="font-bold text-slate-900 text-base mt-0.5 block capitalize">{{ selectedEvent.status }}</span>
+            <span class="font-bold text-slate-900 text-base mt-0.5 block capitalize">{{ selectedEvent.status || 'Active' }}</span>
           </div>
         </div>
       </div>
@@ -172,10 +194,10 @@
 
     <div modal-footer class="flex items-center justify-between w-full">
       <div class="flex items-center gap-2">
-        <a [routerLink]="['/admin/events', selectedEvent?.eventId, 'seats']" class="px-3 py-1.5 bg-purple-50 text-purple-700 font-semibold text-xs rounded-xl">
+        <a [routerLink]="['/admin/events', selectedEvent?.id, 'seats']" class="px-3 py-1.5 bg-purple-50 text-purple-700 font-semibold text-xs rounded-xl">
           Seat Layout Editor
         </a>
-        <a [routerLink]="['/admin/events', selectedEvent?.eventId, 'parking']" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-xl">
+        <a [routerLink]="['/admin/events', selectedEvent?.id, 'parking']" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 font-semibold text-xs rounded-xl">
           Parking Layout Editor
         </a>
       </div>

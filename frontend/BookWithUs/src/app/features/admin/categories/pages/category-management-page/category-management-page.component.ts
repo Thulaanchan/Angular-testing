@@ -8,11 +8,12 @@ import { StatusBadgeComponent } from '../../../../../shared/components/status-ba
 import { LoadingSpinnerComponent } from '../../../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
 import { ModalComponent } from '../../../../../shared/components/modal/modal.component';
+import { AlertBannerComponent } from '../../../../../shared/components/alert-banner/alert-banner.component';
 
 @Component({
   selector: 'app-category-management-page',
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, StatusBadgeComponent, LoadingSpinnerComponent, EmptyStateComponent, ModalComponent],
+  imports: [CommonModule, RouterModule, FormsModule, StatusBadgeComponent, LoadingSpinnerComponent, EmptyStateComponent, ModalComponent, AlertBannerComponent],
   templateUrl: './category-management-page.component.html',
   styleUrls: ['./category-management-page.component.css']
 })
@@ -22,6 +23,8 @@ export class CategoryManagementPageComponent implements OnInit {
   categories: CategoryDto[] = [];
   isLoading = true;
   searchTerm = '';
+  errorMessage = '';
+  successMessage = '';
 
   selectedCategory: CategoryDto | null = null;
   showDetailsModal = false;
@@ -32,13 +35,15 @@ export class CategoryManagementPageComponent implements OnInit {
 
   loadCategories(): void {
     this.isLoading = true;
+    this.errorMessage = '';
     this.categoryService.getCategories().subscribe({
       next: (data) => {
         this.categories = data;
         this.isLoading = false;
       },
-      error: () => {
+      error: (err) => {
         this.isLoading = false;
+        this.errorMessage = err.error?.message || err.message || 'Failed to load categories.';
       }
     });
   }
@@ -55,5 +60,26 @@ export class CategoryManagementPageComponent implements OnInit {
   viewDetails(cat: CategoryDto): void {
     this.selectedCategory = cat;
     this.showDetailsModal = true;
+  }
+
+  deleteCategory(cat: CategoryDto): void {
+    if (!confirm(`Are you sure you want to delete category "${cat.name}"?`)) {
+      return;
+    }
+    this.errorMessage = '';
+    this.successMessage = '';
+    this.categoryService.deleteCategory(cat.id).subscribe({
+      next: () => {
+        this.successMessage = `Category "${cat.name}" deleted successfully.`;
+        this.loadCategories();
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          this.errorMessage = `Cannot delete category "${cat.name}" because it has linked events.`;
+        } else {
+          this.errorMessage = err.error?.message || err.message || `Failed to delete category "${cat.name}".`;
+        }
+      }
+    });
   }
 }

@@ -32,14 +32,14 @@
           <tbody class="divide-y divide-slate-100">
             @for (p of payments; track p.paymentId) {
               <tr class="hover:bg-slate-50/50 transition">
-                <td class="py-3.5 px-4 font-mono font-bold text-slate-700">{{ p.transactionId }}</td>
-                <td class="py-3.5 px-4 font-mono font-medium text-purple-700">{{ p.bookingReference }}</td>
-                <td class="py-3.5 px-4 font-semibold text-slate-900">{{ p.eventTitle }}</td>
-                <td class="py-3.5 px-4 text-slate-500">{{ p.paymentDate | date:'medium' }}</td>
-                <td class="py-3.5 px-4 text-slate-600 capitalize">{{ p.paymentMethod }}</td>
-                <td class="py-3.5 px-4 text-right font-black text-slate-900">${{ p.amount | number:'1.2-2' }}</td>
+                <td class="py-3.5 px-4 font-mono font-bold text-slate-700">TXN-{{ p.paymentId }}</td>
+                <td class="py-3.5 px-4 font-mono font-medium text-purple-700">{{ p.bookingNumber || p.bookingReference }}</td>
+                <td class="py-3.5 px-4 font-semibold text-slate-900">{{ p.eventName || p.eventTitle }}</td>
+                <td class="py-3.5 px-4 text-slate-500">{{ (p.paidAtUtc || p.paymentDate) | date:'medium' }}</td>
+                <td class="py-3.5 px-4 text-slate-600 capitalize">{{ getPaymentMethodName(p.paymentMethod) }}</td>
+                <td class="py-3.5 px-4 text-right font-black text-slate-900">LKR {{ (p.amount ?? p.amountPaid) | number:'1.2-2' }}</td>
                 <td class="py-3.5 px-4 text-center">
-                  <app-status-badge [status]="p.status" size="xs"></app-status-badge>
+                  <app-status-badge [status]="getPaymentStatusName(p.status ?? p.paymentStatus)" size="xs"></app-status-badge>
                 </td>
                 <td class="py-3.5 px-4 text-right">
                   <button

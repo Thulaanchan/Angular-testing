@@ -79,7 +79,7 @@ export class AdminSeatMapPageComponent implements OnInit {
 
   saveSeatChanges(): void {
     if (!this.selectedSeat) return;
-    const idx = this.seats.findIndex(s => s.seatId === this.selectedSeat!.seatId);
+    const idx = this.seats.findIndex(s => (s.id || s.seatId) === (this.selectedSeat!.id || this.selectedSeat!.seatId));
     if (idx !== -1) {
       this.seats[idx] = { ...this.selectedSeat };
       this.groupSeatsBySection(this.seats);

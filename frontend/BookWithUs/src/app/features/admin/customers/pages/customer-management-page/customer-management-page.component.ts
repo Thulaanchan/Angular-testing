@@ -2,13 +2,15 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { CustomerService } from '../../../../../core/services/customers/customer.service';
-import { CustomerSummaryDto, CustomerProfileDto } from '../../../../../core/models/customers/customer.model';
+import { CustomerSummaryDto, CustomerDto } from '../../../../../core/models/customers/customer.model';
+import { PagedResult } from '../../../../../core/models/common/paged-result.model';
 import { StatusBadgeComponent } from '../../../../../shared/components/status-badge/status-badge.component';
 import { LoadingSpinnerComponent } from '../../../../../shared/components/loading-spinner/loading-spinner.component';
 import { EmptyStateComponent } from '../../../../../shared/components/empty-state/empty-state.component';
 import { PaginationComponent } from '../../../../../shared/components/pagination/pagination.component';
 import { ModalComponent } from '../../../../../shared/components/modal/modal.component';
 import { ConfirmationDialogComponent } from '../../../../../shared/components/confirmation-dialog/confirmation-dialog.component';
+import { AlertBannerComponent } from '../../../../../shared/components/alert-banner/alert-banner.component';
 
 @Component({
   selector: 'app-customer-management-page',
@@ -21,7 +23,8 @@ import { ConfirmationDialogComponent } from '../../../../../shared/components/co
     EmptyStateComponent,
     PaginationComponent,
     ModalComponent,
-    ConfirmationDialogComponent
+    ConfirmationDialogComponent,
+    AlertBannerComponent
   ],
   templateUrl: './customer-management-page.component.html',
   styleUrls: ['./customer-management-page.component.css']
@@ -30,8 +33,8 @@ export class CustomerManagementPageComponent implements OnInit {
   private customerService = inject(CustomerService);
 
   customers: CustomerSummaryDto[] = [];
-  filteredCustomers: CustomerSummaryDto[] = [];
   isLoading = true;
+  errorMessage = '';
 
   searchTerm = '';
   statusFilter: 'all' | 'active' | 'inactive' = 'all';
@@ -43,6 +46,8 @@ export class CustomerManagementPageComponent implements OnInit {
 
   // Drawer / Details Modal
   selectedCustomer: CustomerSummaryDto | null = null;
+  selectedCustomerDetails: CustomerDto | null = null;
+  isLoadingDetails = false;
   showDetailsModal = false;
 
   // Deactivate dialog
@@ -55,20 +60,27 @@ export class CustomerManagementPageComponent implements OnInit {
 
   loadCustomers(): void {
     this.isLoading = true;
-    this.customerService.getCustomers({
-      pageNumber: this.currentPage,
-      pageSize: this.pageSize,
-      searchTerm: this.searchTerm || undefined,
-      status: this.statusFilter !== 'all' ? this.statusFilter : undefined
-    }).subscribe({
-      next: (res: any) => {
-        this.customers = res.items;
-        this.filteredCustomers = res.items;
+    this.errorMessage = '';
+    this.customerService.searchCustomers(
+      this.searchTerm.trim() || undefined,
+      this.currentPage,
+      this.pageSize
+    ).subscribe({
+      next: (res: PagedResult<CustomerSummaryDto>) => {
+        let items = res.items || [];
+        if (this.statusFilter === 'active') {
+          items = items.filter(c => c.isActive);
+        } else if (this.statusFilter === 'inactive') {
+          items = items.filter(c => !c.isActive);
+        }
+        this.customers = items;
         this.totalCount = res.totalCount;
         this.totalPages = res.totalPages;
         this.isLoading = false;
       },
       error: () => {
+        this.customers = [];
+        this.errorMessage = 'Unable to load customer directory. Please check your connection and try again.';
         this.isLoading = false;
       }
     });
@@ -92,7 +104,24 @@ export class CustomerManagementPageComponent implements OnInit {
 
   viewCustomerDetails(customer: CustomerSummaryDto): void {
     this.selectedCustomer = customer;
+    this.selectedCustomerDetails = null;
     this.showDetailsModal = true;
+    this.isLoadingDetails = true;
+
+    const id = customer.customerId || customer.id || 0;
+    if (id > 0) {
+      this.customerService.getCustomerById(id).subscribe({
+        next: (details) => {
+          this.selectedCustomerDetails = details;
+          this.isLoadingDetails = false;
+        },
+        error: () => {
+          this.isLoadingDetails = false;
+        }
+      });
+    } else {
+      this.isLoadingDetails = false;
+    }
   }
 
   openDeactivateDialog(customer: CustomerSummaryDto, event: MouseEvent): void {
@@ -111,7 +140,7 @@ export class CustomerManagementPageComponent implements OnInit {
         this.isDeactivating = false;
         this.showDeactivateDialog = false;
         if (this.selectedCustomer) {
-          this.selectedCustomer.status = 'Inactive';
+          this.selectedCustomer.isActive = false;
         }
         this.loadCustomers();
       },

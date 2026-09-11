@@ -16,18 +16,14 @@ export class VenueService {
 
   getVenues(): Observable<VenueDto[]> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<VenueDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.base}`).pipe(
-        catchError(() => of(this.mockData.venues))
-      );
+      return this.http.get<VenueDto[]>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.base}`);
     }
     return of(this.mockData.venues);
   }
 
   getVenueById(id: number): Observable<VenueDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<VenueDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.byId(id)}`).pipe(
-        catchError(() => of(this.mockData.venues.find(v => v.id === id) || this.mockData.venues[0]))
-      );
+      return this.http.get<VenueDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.byId(id)}`);
     }
     return of(this.mockData.venues.find(v => v.id === id) || this.mockData.venues[0]);
   }
@@ -40,39 +36,28 @@ export class VenueService {
         .set('end', end);
       if (excludeEventId) params = params.set('excludeEventId', excludeEventId.toString());
 
-      return this.http.get<VenueAvailabilityDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.availability(id)}`, { params }).pipe(
-        catchError(() => of(this.mockAvailability(id, date, start, end)))
-      );
+      return this.http.get<VenueAvailabilityDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.availability(id)}`, { params });
     }
     return of(this.mockAvailability(id, date, start, end));
   }
 
   createVenue(request: CreateVenueDto): Observable<VenueDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.post<VenueDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.base}`, request).pipe(
-        catchError(() => of(this.createMockVenue(request)))
-      );
+      return this.http.post<VenueDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.base}`, request);
     }
     return of(this.createMockVenue(request));
   }
 
   updateVenue(id: number, request: UpdateVenueDto): Observable<VenueDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.put<VenueDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.byId(id)}`, request).pipe(
-        catchError(() => of(this.updateMockVenue(id, request)))
-      );
+      return this.http.put<VenueDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.byId(id)}`, request);
     }
     return of(this.updateMockVenue(id, request));
   }
 
   deleteVenue(id: number): Observable<void> {
     if (!API_CONFIG.useMockData) {
-      return this.http.delete<void>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.byId(id)}`).pipe(
-        catchError(() => {
-          this.mockData.venues = this.mockData.venues.filter(v => v.id !== id);
-          return of(void 0);
-        })
-      );
+      return this.http.delete<void>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.venues.byId(id)}`);
     }
     this.mockData.venues = this.mockData.venues.filter(v => v.id !== id);
     return of(void 0);

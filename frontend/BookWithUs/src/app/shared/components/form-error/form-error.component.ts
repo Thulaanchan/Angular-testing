@@ -15,10 +15,11 @@ export class FormErrorComponent {
   @Input() fieldName: string = 'Field';
 
   get errorMessage(): string | null {
-    if (this.customMessage) return this.customMessage;
     if (!this.control || !this.control.touched || !this.control.errors) return null;
 
     const errors = this.control.errors;
+    if (errors['serverError']) return errors['serverError'];
+    if (this.customMessage) return this.customMessage;
     if (errors['required']) return `${this.fieldName} is required`;
     if (errors['email']) return `Please enter a valid email address`;
     if (errors['minlength']) return `${this.fieldName} must be at least ${errors['minlength'].requiredLength} characters`;

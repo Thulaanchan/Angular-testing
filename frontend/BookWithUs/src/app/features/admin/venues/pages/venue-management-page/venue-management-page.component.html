@@ -12,6 +12,14 @@
     </a>
   </div>
 
+  <!-- Alerts -->
+  @if (errorMessage) {
+    <app-alert-banner type="error" [message]="errorMessage" [dismissible]="true" (dismissed)="errorMessage = ''"></app-alert-banner>
+  }
+  @if (successMessage) {
+    <app-alert-banner type="success" [message]="successMessage" [dismissible]="true" (dismissed)="successMessage = ''"></app-alert-banner>
+  }
+
   <!-- Search Bar -->
   <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex items-center justify-between">
     <div class="relative w-full max-w-sm">
@@ -47,23 +55,23 @@
               <th class="py-3.5 px-4">Venue Name</th>
               <th class="py-3.5 px-4">Location / Address</th>
               <th class="py-3.5 px-4 text-center">Seat Capacity</th>
-              <th class="py-3.5 px-4 text-center">Parking Capacity</th>
+              <th class="py-3.5 px-4 text-center">Upcoming Events</th>
               <th class="py-3.5 px-4 text-center">Status</th>
               <th class="py-3.5 px-4 text-right">Actions</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
-            @for (v of filteredVenues; track v.venueId) {
+            @for (v of filteredVenues; track v.id) {
               <tr class="hover:bg-slate-50/50 transition cursor-pointer" (click)="viewDetails(v)">
                 <td class="py-3.5 px-4">
                   <div class="font-bold text-slate-900">{{ v.name }}</div>
-                  <span class="text-[11px] text-slate-400">ID: #VEN-{{ v.venueId }}</span>
+                  <span class="text-[11px] text-slate-400">ID: #VEN-{{ v.id }}</span>
                 </td>
-                <td class="py-3.5 px-4 text-slate-600">{{ v.location }}</td>
-                <td class="py-3.5 px-4 text-center font-bold text-slate-800">{{ v.capacity | number }}</td>
-                <td class="py-3.5 px-4 text-center font-bold text-slate-800">{{ v.parkingCapacity || 60 }} stalls</td>
+                <td class="py-3.5 px-4 text-slate-600">{{ v.address || v.location }}</td>
+                <td class="py-3.5 px-4 text-center font-bold text-slate-800">{{ (v.totalCapacity || v.capacity) | number }}</td>
+                <td class="py-3.5 px-4 text-center font-bold text-slate-800">{{ v.upcomingEventCount ?? v.upcomingEventsCount ?? 0 }}</td>
                 <td class="py-3.5 px-4 text-center">
-                  <app-status-badge [status]="v.isActive ? 'Active' : 'Inactive'" size="xs"></app-status-badge>
+                  <app-status-badge [status]="(v.isActive !== false) ? 'Active' : 'Inactive'" size="xs"></app-status-badge>
                 </td>
                 <td class="py-3.5 px-4 text-right">
                   <div class="flex items-center justify-end gap-2" (click)="$event.stopPropagation()">
@@ -74,10 +82,16 @@
                       Details
                     </button>
                     <a
-                      [routerLink]="['/admin/venues', v.venueId, 'edit']"
+                      [routerLink]="['/admin/venues', v.id, 'edit']"
                       class="px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition">
                       Edit
                     </a>
+                    <button
+                      type="button"
+                      (click)="deleteVenue(v)"
+                      class="px-2 py-1 text-xs font-semibold text-red-600 hover:bg-red-50 rounded-lg transition">
+                      Delete
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -100,17 +114,17 @@
         <div class="grid grid-cols-2 gap-4">
           <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
             <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Seat Capacity</span>
-            <span class="text-2xl font-black text-slate-900 mt-1 block">{{ selectedVenue.capacity | number }} Seats</span>
+            <span class="text-2xl font-black text-slate-900 mt-1 block">{{ (selectedVenue.totalCapacity || selectedVenue.capacity) | number }} Seats</span>
           </div>
           <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
-            <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Parking Capacity</span>
-            <span class="text-2xl font-black text-purple-700 mt-1 block">{{ selectedVenue.parkingCapacity || 60 }} Stalls</span>
+            <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Upcoming Events</span>
+            <span class="text-2xl font-black text-purple-700 mt-1 block">{{ selectedVenue.upcomingEventCount ?? selectedVenue.upcomingEventsCount ?? 0 }} Events</span>
           </div>
         </div>
 
         <div>
           <span class="text-slate-400 block uppercase tracking-wider text-[10px] mb-1">Full Location Address</span>
-          <p class="font-semibold text-slate-800 text-sm">{{ selectedVenue.location }}</p>
+          <p class="font-semibold text-slate-800 text-sm">{{ selectedVenue.address || selectedVenue.location }}</p>
         </div>
 
         <!-- Real-time Availability Checker (AS-03 / AD-10) -->

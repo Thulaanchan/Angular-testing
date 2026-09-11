@@ -48,7 +48,7 @@ export class BookingManagementPageComponent implements OnInit {
 
   loadBookings(): void {
     this.isLoading = true;
-    this.bookingService.getCustomerBookings().subscribe({
+    this.bookingService.getAllBookings().subscribe({
       next: (data) => {
         this.bookings = data;
         this.filter();

@@ -9,6 +9,7 @@ export interface NotificationDto {
   createdAt?: string;
   type?: NotificationType;
   actionUrl?: string;
+  bookingNumber?: string;
 }
 
 export type Notification = NotificationDto;

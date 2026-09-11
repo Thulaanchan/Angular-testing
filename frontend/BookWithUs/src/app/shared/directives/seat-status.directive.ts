@@ -25,18 +25,27 @@ export class SeatStatusDirective implements OnChanges {
     switch (this.status) {
       case SeatStatus.Available:
       case 1:
+      case 'Available':
+      case 'available':
         this.renderer.addClass(el, 'seat-available');
         break;
       case SeatStatus.Held:
       case 2:
+      case 'Held':
+      case 'held':
         this.renderer.addClass(el, 'seat-held');
         break;
       case SeatStatus.Booked:
       case 3:
+      case 'Booked':
+      case 'booked':
+      case 'Occupied':
+      case 'occupied':
         this.renderer.addClass(el, 'seat-booked');
         break;
       case 4:
       case 'VIP':
+      case 'vip':
         this.renderer.addClass(el, 'seat-vip');
         break;
     }

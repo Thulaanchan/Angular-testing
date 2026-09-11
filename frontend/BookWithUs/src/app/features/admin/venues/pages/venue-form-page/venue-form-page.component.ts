@@ -1,20 +1,18 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { VenueService } from '../../../../../core/services/venues/venue.service';
-import { FormErrorComponent } from '../../../../../shared/components/form-error/form-error.component';
 import { AlertBannerComponent } from '../../../../../shared/components/alert-banner/alert-banner.component';
 
 @Component({
   selector: 'app-venue-form-page',
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, RouterModule, FormErrorComponent, AlertBannerComponent],
+  imports: [CommonModule, FormsModule, RouterModule, AlertBannerComponent],
   templateUrl: './venue-form-page.component.html',
   styleUrls: ['./venue-form-page.component.css']
 })
 export class VenueFormPageComponent implements OnInit {
-  private fb = inject(FormBuilder);
   private venueService = inject(VenueService);
   private route = inject(ActivatedRoute);
   private router = inject(Router);
@@ -24,13 +22,12 @@ export class VenueFormPageComponent implements OnInit {
   isLoading = false;
   errorMessage = '';
 
-  venueForm: FormGroup = this.fb.group({
-    name: ['', [Validators.required, Validators.minLength(3)]],
-    location: ['', [Validators.required, Validators.minLength(5)]],
-    capacity: [1000, [Validators.required, Validators.min(10)]],
-    parkingCapacity: [60, [Validators.required, Validators.min(0)]],
-    isActive: [true]
-  });
+  venue = {
+    name: '',
+    address: '',
+    totalCapacity: 1000,
+    isActive: true
+  };
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');
@@ -42,31 +39,39 @@ export class VenueFormPageComponent implements OnInit {
   }
 
   loadVenue(id: number): void {
+    this.isLoading = true;
     this.venueService.getVenueById(id).subscribe({
-      next: (venue) => {
-        this.venueForm.patchValue({
-          name: venue.name,
-          location: venue.location,
-          capacity: venue.capacity,
-          parkingCapacity: venue.parkingCapacity || 60,
-          isActive: venue.isActive
-        });
+      next: (v) => {
+        this.venue.name = v.name;
+        this.venue.address = v.address || v.location || '';
+        this.venue.totalCapacity = v.totalCapacity || v.capacity || 1000;
+        this.venue.isActive = v.isActive ?? true;
+        this.isLoading = false;
+      },
+      error: (err) => {
+        this.isLoading = false;
+        this.errorMessage = err.error?.message || err.message || 'Failed to load venue.';
       }
     });
   }
 
-  onSubmit(): void {
-    if (this.venueForm.invalid) {
-      this.venueForm.markAllAsTouched();
+  onSubmit(form: NgForm): void {
+    if (form.invalid) {
+      Object.keys(form.controls).forEach(key => form.controls[key].markAsTouched());
       return;
     }
 
     this.isLoading = true;
-    const formVal = this.venueForm.value;
+    this.errorMessage = '';
+    const payload = {
+      name: this.venue.name.trim(),
+      address: this.venue.address.trim(),
+      totalCapacity: Number(this.venue.totalCapacity)
+    };
 
     const op = this.isEditMode && this.venueId
-      ? this.venueService.updateVenue(this.venueId, formVal)
-      : this.venueService.createVenue(formVal);
+      ? this.venueService.updateVenue(this.venueId, payload)
+      : this.venueService.createVenue(payload);
 
     op.subscribe({
       next: () => {
@@ -75,7 +80,7 @@ export class VenueFormPageComponent implements OnInit {
       },
       error: (err) => {
         this.isLoading = false;
-        this.errorMessage = err.message || 'Failed to save venue.';
+        this.errorMessage = err.error?.message || err.message || 'Failed to save venue.';
       }
     });
   }

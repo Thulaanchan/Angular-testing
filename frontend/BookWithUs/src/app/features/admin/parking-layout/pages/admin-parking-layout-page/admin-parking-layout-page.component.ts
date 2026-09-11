@@ -38,23 +38,25 @@ export class AdminParkingLayoutPageComponent implements OnInit {
   showSlotEditor = false;
   saveSuccess = false;
 
-  // Zone rates editor
-  carRate = 15;
-  vanRate = 20;
-  bikeRate = 5;
-  threeWheelerRate = 8;
+  // Zone rates editor (LKR)
+  carRate = 1500;
+  vanRate = 2500;
+  bikeRate = 500;
+  threeWheelerRate = 800;
   ratesSaved = false;
 
+  eventId = 2;
+
   ngOnInit(): void {
-    const venueId = Number(this.route.snapshot.paramMap.get('id') || '1');
-    this.loadSlots(venueId);
+    this.eventId = Number(this.route.snapshot.paramMap.get('id') || '2');
+    this.loadSlots(this.eventId);
   }
 
-  loadSlots(venueId: number): void {
+  loadSlots(eventId: number): void {
     this.isLoading = true;
-    this.parkingService.getVenueParkingSlots(venueId).subscribe({
+    this.parkingService.getEventParkingSlots(eventId).subscribe({
       next: (data: ParkingAvailabilityDto[]) => {
-        this.slots = data;
+        this.slots = data || [];
         this.isLoading = false;
       },
       error: () => {

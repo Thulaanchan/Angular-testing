@@ -1,4 +1,4 @@
-﻿using EventParkingReservationSystem.API.Models.DTOs.Bookings;
+using EventParkingReservationSystem.API.Models.DTOs.Bookings;
 
 namespace EventParkingReservationSystem.API.Interfaces.Services.Bookings;
 
@@ -16,6 +16,8 @@ public interface IBookingService
 
     Task<IReadOnlyList<BookingSummaryDto>> GetEventBookingsAsync(
         int eventId);
+
+    Task<IReadOnlyList<BookingSummaryDto>> GetAllBookingsAsync();
 
     Task<CancelBookingResponseDto?> CancelAsync(
         int bookingId,

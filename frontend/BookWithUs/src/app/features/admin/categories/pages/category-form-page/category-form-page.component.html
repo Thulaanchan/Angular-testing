@@ -13,32 +13,48 @@
   }
 
   <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs">
-    <form [formGroup]="categoryForm" (ngSubmit)="onSubmit()" class="space-y-4">
+    <form #categoryForm="ngForm" (ngSubmit)="onSubmit(categoryForm)" class="space-y-4" novalidate>
       <div>
-        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Category Name</label>
+        <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Category Name <span class="text-red-500">*</span></label>
         <input
           type="text"
-          formControlName="name"
+          name="name"
+          #nameCtrl="ngModel"
+          [(ngModel)]="category.name"
+          required
+          minlength="2"
+          maxlength="100"
           placeholder="e.g. Concerts"
-          class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
-        <app-form-error [control]="categoryForm.get('name')" fieldName="Category name"></app-form-error>
+          class="w-full px-4 py-2.5 text-xs bg-slate-50 border rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600"
+          [class.border-red-400]="nameCtrl.invalid && nameCtrl.touched"
+          [class.border-slate-200]="!(nameCtrl.invalid && nameCtrl.touched)" />
+        @if (nameCtrl.invalid && nameCtrl.touched) {
+          <div class="mt-1 text-[11px] text-red-500">
+            @if (nameCtrl.errors?.['required']) {
+              Category name is required.
+            } @else if (nameCtrl.errors?.['minlength']) {
+              Category name must be at least 2 characters.
+            }
+          </div>
+        }
       </div>
 
       <div>
         <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Description</label>
         <textarea
-          formControlName="description"
+          name="description"
+          [(ngModel)]="category.description"
           rows="3"
           placeholder="Describe events fitting this category..."
           class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600"></textarea>
-        <app-form-error [control]="categoryForm.get('description')" fieldName="Description"></app-form-error>
       </div>
 
       <div class="pt-2">
         <label class="inline-flex items-center gap-2 cursor-pointer">
           <input
             type="checkbox"
-            formControlName="isActive"
+            name="isActive"
+            [(ngModel)]="category.isActive"
             class="w-4 h-4 rounded text-purple-600 focus:ring-purple-500 border-slate-300" />
           <span class="text-xs font-medium text-slate-700">Category is Active</span>
         </label>

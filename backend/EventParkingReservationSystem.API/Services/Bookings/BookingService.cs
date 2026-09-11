@@ -1,4 +1,4 @@
-﻿using System.Data;
+using System.Data;
 using EventParkingReservationSystem.API.Common.Exceptions;
 using EventParkingReservationSystem.API.Configurations.Booking;
 using EventParkingReservationSystem.API.Data.Context;
@@ -254,6 +254,21 @@ public class BookingService : IBookingService
             await _bookingRepository
                 .GetByEventIdAsync(
                     eventId);
+
+        return bookings
+            .Select(MapToSummaryDto)
+            .ToList();
+    }
+
+    // =====================================================
+    // ADMIN - ALL BOOKINGS
+    // =====================================================
+    public async Task<IReadOnlyList<BookingSummaryDto>>
+        GetAllBookingsAsync()
+    {
+        var bookings =
+            await _bookingRepository
+                .GetAllAsync();
 
         return bookings
             .Select(MapToSummaryDto)

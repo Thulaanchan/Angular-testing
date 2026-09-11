@@ -18,17 +18,29 @@ export class EventService {
   getEvents(query?: EventQueryDto): Observable<PagedResult<EventListItemDto>> {
     if (!API_CONFIG.useMockData) {
       let params = new HttpParams();
-      if (query?.searchTerm) params = params.set('searchTerm', query.searchTerm);
-      if (query?.venueId) params = params.set('venueId', query.venueId.toString());
-      if (query?.categoryId) params = params.set('categoryId', query.categoryId.toString());
-      if (query?.startDate) params = params.set('startDate', query.startDate);
-      if (query?.endDate) params = params.set('endDate', query.endDate);
+      const searchVal = query?.searchTerm || (query as any)?.search;
+      if (searchVal) params = params.set('search', searchVal);
+
+      const venueVal = query?.venueId || (query as any)?.venue;
+      if (venueVal) params = params.set('venue', venueVal.toString());
+
+      const catVal = query?.categoryId || (query as any)?.category;
+      if (catVal) params = params.set('category', catVal.toString());
+
+      const dateVal = query?.startDate || (query as any)?.date;
+      if (dateVal) params = params.set('date', dateVal);
+
+      if ((query as any)?.time) params = params.set('time', (query as any).time);
       if (query?.page) params = params.set('page', query.page.toString());
       if (query?.pageSize) params = params.set('pageSize', query.pageSize.toString());
       if (query?.includePast) params = params.set('includePast', 'true');
 
       return this.http.get<PagedResult<EventListItemDto>>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.events.base}`, { params }).pipe(
-        catchError(() => of(this.getMockEvents(query)))
+        map(res => ({
+          ...res,
+          pageNumber: res.page ?? (res as any).pageNumber ?? 1,
+          total: res.totalCount ?? (res as any).total ?? 0
+        }))
       );
     }
     return of(this.getMockEvents(query));
@@ -36,46 +48,45 @@ export class EventService {
 
   getEventById(id: number): Observable<EventDetailsDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.get<EventDetailsDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.events.byId(id)}`).pipe(
-        catchError(() => {
-          const event = this.mockData.events.find(e => e.id === id) || this.mockData.events[0];
-          return of(event);
-        })
-      );
+      return this.http.get<EventDetailsDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.events.byId(id)}`);
     }
     const event = this.mockData.events.find(e => e.id === id) || this.mockData.events[0];
     return of(event);
   }
 
-  createEvent(formData: FormData): Observable<EventDetailsDto> {
+  createEvent(data: FormData | any): Observable<EventDetailsDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.post<EventDetailsDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.events.base}`, formData).pipe(
-        catchError(() => of(this.createMockEvent(formData)))
-      );
+      const body = data instanceof FormData ? data : this.toFormData(data);
+      return this.http.post<EventDetailsDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.events.base}`, body);
     }
-    return of(this.createMockEvent(formData));
+    return of(this.createMockEvent(data));
   }
 
-  updateEvent(id: number, formData: FormData): Observable<EventDetailsDto> {
+  updateEvent(id: number, data: FormData | any): Observable<EventDetailsDto> {
     if (!API_CONFIG.useMockData) {
-      return this.http.put<EventDetailsDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.events.byId(id)}`, formData).pipe(
-        catchError(() => of(this.mockData.events.find(e => e.id === id) || this.mockData.events[0]))
-      );
+      const body = data instanceof FormData ? data : this.toFormData(data);
+      return this.http.put<EventDetailsDto>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.events.byId(id)}`, body);
     }
     return of(this.mockData.events.find(e => e.id === id) || this.mockData.events[0]);
   }
 
   deleteEvent(id: number): Observable<void> {
     if (!API_CONFIG.useMockData) {
-      return this.http.delete<void>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.events.byId(id)}`).pipe(
-        catchError(() => {
-          this.mockData.events = this.mockData.events.filter(e => e.id !== id);
-          return of(void 0);
-        })
-      );
+      return this.http.delete<void>(`${API_CONFIG.baseUrl}${API_ENDPOINTS.events.byId(id)}`);
     }
     this.mockData.events = this.mockData.events.filter(e => e.id !== id);
     return of(void 0);
+  }
+
+  private toFormData(obj: any): FormData {
+    const fd = new FormData();
+    for (const key of Object.keys(obj)) {
+      if (obj[key] !== null && obj[key] !== undefined) {
+        const formKey = key.charAt(0).toUpperCase() + key.slice(1);
+        fd.append(formKey, obj[key]);
+      }
+    }
+    return fd;
   }
 
   private getMockEvents(query?: EventQueryDto): PagedResult<EventListItemDto> {

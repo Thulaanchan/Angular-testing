@@ -36,10 +36,10 @@
         </div>
         <div class="text-right">
           <span class="inline-block px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 uppercase">
-            {{ receipt.status }}
+            {{ getPaymentStatusName(receipt.paymentStatus) }}
           </span>
-          <p class="text-xs font-mono text-slate-500 mt-1">Receipt #{{ receipt.receiptNumber }}</p>
-          <p class="text-xs text-slate-400">{{ receipt.paymentDate | date:'medium' }}</p>
+          <p class="text-xs font-mono text-slate-500 mt-1">Receipt #REC-{{ receipt.paymentId }}</p>
+          <p class="text-xs text-slate-400">{{ receipt.paidAtUtc | date:'medium' }}</p>
         </div>
       </div>
 
@@ -48,30 +48,30 @@
         <div>
           <span class="text-slate-400 block font-semibold uppercase tracking-wider mb-1">Billed To</span>
           <p class="font-bold text-slate-900 text-sm">{{ receipt.customerName }}</p>
-          <p class="text-slate-600">{{ receipt.customerEmail }}</p>
+          <p class="text-slate-600" *ngIf="receipt.customerEmail">{{ receipt.customerEmail }}</p>
         </div>
         <div>
           <span class="text-slate-400 block font-semibold uppercase tracking-wider mb-1">Reservation</span>
-          <p class="font-mono font-bold text-purple-700 text-sm">{{ receipt.bookingReference }}</p>
-          <p class="text-slate-600">Method: {{ receipt.paymentMethod }}</p>
+          <p class="font-mono font-bold text-purple-700 text-sm">{{ receipt.bookingNumber }}</p>
+          <p class="text-slate-600">Method: {{ getPaymentMethodName(receipt.paymentMethod) }}</p>
         </div>
       </div>
 
       <!-- Event Details Box -->
       <div class="bg-slate-50 rounded-2xl p-5 border border-slate-200 mb-8 space-y-3 text-xs">
         <div class="flex justify-between items-baseline">
-          <span class="text-sm font-bold text-slate-900">{{ receipt.eventTitle }}</span>
-          <span class="font-semibold text-purple-700">{{ receipt.eventDate | date:'mediumDate' }} • {{ receipt.eventDate | date:'shortTime' }}</span>
+          <span class="text-sm font-bold text-slate-900">{{ receipt.eventName }}</span>
+          <span class="font-semibold text-purple-700">{{ receipt.eventDateTime | date:'mediumDate' }} • {{ receipt.eventDateTime | date:'shortTime' }}</span>
         </div>
         <p class="text-slate-600">{{ receipt.venueName }}</p>
-        <div class="pt-2 border-t border-slate-200/80 flex justify-between">
+        <div class="pt-2 border-t border-slate-200/80 flex justify-between" *ngIf="receipt.seatSummary">
           <span class="text-slate-500">Reserved Seats:</span>
           <span class="font-bold text-slate-800">{{ receipt.seatSummary }}</span>
         </div>
-        @if (receipt.parkingSummary) {
+        @if (receipt.parkingSummary || (receipt.parkingAmount > 0)) {
           <div class="flex justify-between text-emerald-700">
             <span>Parking Space:</span>
-            <span class="font-bold">{{ receipt.parkingSummary }}</span>
+            <span class="font-bold">{{ receipt.parkingSummary || 'Reserved Parking Included' }}</span>
           </div>
         }
       </div>
@@ -80,19 +80,21 @@
       <div class="space-y-3 text-xs border-t border-slate-200 pt-6">
         <div class="flex justify-between text-slate-600">
           <span>Tickets Subtotal</span>
-          <span class="font-semibold text-slate-900">${{ receipt.seatsSubtotal | number:'1.2-2' }}</span>
+          <span class="font-semibold text-slate-900">LKR {{ receipt.seatAmount | number:'1.2-2' }}</span>
         </div>
-        <div class="flex justify-between text-slate-600">
-          <span>Parking Reservation Fee</span>
-          <span class="font-semibold text-slate-900">${{ receipt.parkingFee | number:'1.2-2' }}</span>
-        </div>
+        @if (receipt.parkingAmount > 0) {
+          <div class="flex justify-between text-slate-600">
+            <span>Parking Reservation Fee</span>
+            <span class="font-semibold text-slate-900">LKR {{ receipt.parkingAmount | number:'1.2-2' }}</span>
+          </div>
+        }
         <div class="flex justify-between text-slate-600">
           <span>Taxes & Service Fees</span>
           <span class="font-semibold text-emerald-600">Free / Included</span>
         </div>
         <div class="flex justify-between text-lg font-black text-slate-900 pt-4 border-t border-slate-200">
           <span>Total Amount Paid</span>
-          <span class="text-purple-700">${{ receipt.totalAmount | number:'1.2-2' }}</span>
+          <span class="text-purple-700">LKR {{ receipt.totalAmount | number:'1.2-2' }}</span>
         </div>
       </div>
 

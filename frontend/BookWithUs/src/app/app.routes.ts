@@ -88,11 +88,27 @@ export const routes: Routes = [
     ]
   },
 
-  // Direct checkout aliases for compatibility
+  // Direct compatibility aliases (Section 52)
+  { path: 'home', redirectTo: 'customer/dashboard', pathMatch: 'full' },
+  {
+    path: 'events/:id/seats',
+    loadComponent: () => import('./features/seats/pages/seat-selection-page/seat-selection-page.component').then(m => m.SeatSelectionPageComponent)
+  },
+  {
+    path: 'events/:id/parking',
+    loadComponent: () => import('./features/parking/pages/parking-selection-page/parking-selection-page.component').then(m => m.ParkingSelectionPageComponent)
+  },
   { path: 'checkout/review', redirectTo: 'booking/review', pathMatch: 'full' },
   { path: 'checkout/payment', redirectTo: 'booking/payment', pathMatch: 'full' },
   { path: 'checkout/confirmation', redirectTo: 'booking/confirmation', pathMatch: 'full' },
-  { path: 'checkout/confirmation/:id', redirectTo: 'booking/confirmation/:id', pathMatch: 'full' },
+  { path: 'checkout/confirmation/:id', redirectTo: (route: any) => `/booking/confirmation/${route.params['id']}` },
+  { path: 'bookings', redirectTo: 'customer/bookings', pathMatch: 'full' },
+  { path: 'bookings/:id', redirectTo: (route: any) => `/customer/bookings/${route.params['id']}` },
+  { path: 'bookings/:id/confirmation', redirectTo: (route: any) => `/booking/confirmation/${route.params['id']}` },
+  { path: 'payments', redirectTo: 'customer/payments', pathMatch: 'full' },
+  { path: 'payments/:id/receipt', redirectTo: (route: any) => `/receipt/${route.params['id']}` },
+  { path: 'notifications', redirectTo: 'customer/notifications', pathMatch: 'full' },
+  { path: 'profile', redirectTo: 'customer/profile', pathMatch: 'full' },
 
   // Customer Portal
   {
@@ -152,6 +168,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/venues/pages/venue-form-page/venue-form-page.component').then(m => m.VenueFormPageComponent)
       },
       {
+        path: 'venues/new',
+        redirectTo: 'venues/create',
+        pathMatch: 'full'
+      },
+      {
         path: 'venues/:id/edit',
         loadComponent: () => import('./features/admin/venues/pages/venue-form-page/venue-form-page.component').then(m => m.VenueFormPageComponent)
       },
@@ -164,6 +185,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/admin/categories/pages/category-form-page/category-form-page.component').then(m => m.CategoryFormPageComponent)
       },
       {
+        path: 'categories/new',
+        redirectTo: 'categories/create',
+        pathMatch: 'full'
+      },
+      {
         path: 'categories/:id/edit',
         loadComponent: () => import('./features/admin/categories/pages/category-form-page/category-form-page.component').then(m => m.CategoryFormPageComponent)
       },
@@ -174,6 +200,11 @@ export const routes: Routes = [
       {
         path: 'events/create',
         loadComponent: () => import('./features/admin/events/pages/event-form-page/event-form-page.component').then(m => m.EventFormPageComponent)
+      },
+      {
+        path: 'events/new',
+        redirectTo: 'events/create',
+        pathMatch: 'full'
       },
       {
         path: 'events/:id/edit',
