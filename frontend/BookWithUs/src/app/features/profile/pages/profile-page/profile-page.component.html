@@ -1,0 +1,123 @@
+<div class="max-w-4xl mx-auto space-y-8">
+  <div>
+    <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Account & Profile</h1>
+    <p class="text-xs text-slate-500 mt-1">Manage your personal information, security credentials, and preferences</p>
+  </div>
+
+  <!-- Profile Card -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs">
+    <div class="flex items-center gap-5 pb-6 border-b border-slate-100">
+      <div class="w-16 h-16 rounded-2xl bg-purple-600 text-white font-black text-xl flex items-center justify-center shadow-md shadow-purple-200">
+        {{ authService.currentUserValue?.fullName?.substring(0, 2)?.toUpperCase() || 'LT' }}
+      </div>
+      <div>
+        <h2 class="text-lg font-bold text-slate-900">{{ authService.currentUserValue?.fullName || 'Leon Thas' }}</h2>
+        <p class="text-xs text-slate-500">{{ authService.currentUserValue?.email }}</p>
+        <span class="inline-block mt-1.5 px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-50 text-purple-700 border border-purple-200">
+          Verified Customer
+        </span>
+      </div>
+    </div>
+
+    @if (profileSuccess) {
+      <div class="mt-6">
+        <app-alert-banner type="success" message="Profile information updated successfully!"></app-alert-banner>
+      </div>
+    }
+
+    <form [formGroup]="profileForm" (ngSubmit)="saveProfile()" class="mt-6 space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Full Name</label>
+          <input
+            type="text"
+            formControlName="fullName"
+            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
+          <app-form-error [control]="profileForm.get('fullName')" fieldName="Full name"></app-form-error>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
+          <input
+            type="email"
+            formControlName="email"
+            class="w-full px-4 py-2.5 text-xs bg-slate-100 border border-slate-200 rounded-xl text-slate-500 cursor-not-allowed" />
+          <span class="text-[10px] text-slate-400 mt-1 block">Email cannot be changed directly</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Phone Number</label>
+          <input
+            type="tel"
+            formControlName="phoneNumber"
+            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
+        </div>
+      </div>
+
+      <div class="pt-4 flex justify-end">
+        <button
+          type="submit"
+          [disabled]="isSavingProfile"
+          class="px-5 py-2.5 bg-purple-600 hover:bg-purple-700 disabled:opacity-60 text-white font-semibold text-xs rounded-xl shadow-xs transition">
+          {{ isSavingProfile ? 'Saving...' : 'Save Changes' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Change Password Section -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-6 sm:p-8 shadow-xs">
+    <h3 class="text-base font-bold text-slate-900 mb-1">Security & Password</h3>
+    <p class="text-xs text-slate-500 mb-6">Update your account password to maintain security</p>
+
+    @if (passwordSuccess) {
+      <div class="mb-4">
+        <app-alert-banner type="success" message="Password changed successfully!"></app-alert-banner>
+      </div>
+    }
+
+    @if (passwordError) {
+      <div class="mb-4">
+        <app-alert-banner type="error" [message]="passwordError"></app-alert-banner>
+      </div>
+    }
+
+    <form [formGroup]="passwordForm" (ngSubmit)="savePassword()" class="space-y-4">
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Current Password</label>
+          <input
+            type="password"
+            formControlName="currentPassword"
+            placeholder="••••••••"
+            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">New Password</label>
+          <input
+            type="password"
+            formControlName="newPassword"
+            placeholder="••••••••"
+            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 uppercase tracking-wider mb-1.5">Confirm New Password</label>
+          <input
+            type="password"
+            formControlName="confirmNewPassword"
+            placeholder="••••••••"
+            class="w-full px-4 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
+        </div>
+      </div>
+
+      <div class="pt-4 flex justify-end">
+        <button
+          type="submit"
+          [disabled]="isSavingPassword"
+          class="px-5 py-2.5 bg-slate-800 hover:bg-slate-900 disabled:opacity-60 text-white font-semibold text-xs rounded-xl shadow-xs transition">
+          {{ isSavingPassword ? 'Updating...' : 'Update Password' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

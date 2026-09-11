@@ -1,0 +1,64 @@
+@if (bookingState.state$ | async; as bs) {
+  @if (bs.holdActive && bs.holdSecondsRemaining > 0) {
+    <div class="rounded-xl p-4 transition-all duration-300 border"
+      [class.bg-amber-50]="!isUrgent"
+      [class.border-amber-200]="!isUrgent"
+      [class.text-amber-900]="!isUrgent"
+      [class.bg-rose-50]="isUrgent"
+      [class.border-rose-200]="isUrgent"
+      [class.text-rose-900]="isUrgent"
+      [class.animate-pulse]="isUrgent">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
+            [class.bg-amber-100]="!isUrgent"
+            [class.text-amber-600]="!isUrgent"
+            [class.bg-rose-100]="isUrgent"
+            [class.text-rose-600]="isUrgent">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold">
+              @if (isUrgent) {
+                Hurry! Your hold is about to expire
+              } @else {
+                Seats Held for Booking
+              }
+            </p>
+            <p class="text-xs opacity-80">
+              Complete your checkout within the time limit to secure your selected seats.
+            </p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2 font-mono font-bold text-lg px-3 py-1 rounded-lg"
+          [class.bg-white]="true"
+          [class.text-amber-700]="!isUrgent"
+          [class.text-rose-700]="isUrgent"
+          [class.shadow-xs]="true">
+          <span>{{ bookingState.formattedHoldTimer }}</span>
+        </div>
+      </div>
+    </div>
+  } @else if (isExpired) {
+    <div class="rounded-xl p-4 bg-rose-50 border border-rose-200 text-rose-900">
+      <div class="flex items-center justify-between flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-rose-100 text-rose-600 flex items-center justify-center shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm font-semibold">Hold Expired</p>
+            <p class="text-xs opacity-80">Your 15-minute seat hold window has elapsed. Seats have been released.</p>
+          </div>
+        </div>
+        <a [routerLink]="['/booking/seats']" class="px-4 py-1.5 text-xs font-semibold bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-colors">
+          Select Seats Again
+        </a>
+      </div>
+    </div>
+  }
+}

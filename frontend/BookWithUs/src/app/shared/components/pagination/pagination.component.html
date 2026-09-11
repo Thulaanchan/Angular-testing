@@ -1,0 +1,46 @@
+@if (totalPages > 1 || totalCount > 0) {
+  <div class="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-2 border-t border-slate-200/80">
+    <div class="text-xs text-slate-500">
+      Showing <span class="font-semibold text-slate-700">{{ startIndex }}</span> to
+      <span class="font-semibold text-slate-700">{{ endIndex }}</span> of
+      <span class="font-semibold text-slate-700">{{ totalCount }}</span> results
+    </div>
+
+    <div class="flex items-center space-x-1">
+      <button
+        type="button"
+        (click)="prev()"
+        [disabled]="currentPage <= 1"
+        class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent rounded-lg transition-colors"
+        aria-label="Previous page">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+        </svg>
+      </button>
+
+      @for (page of pages; track page) {
+        <button
+          type="button"
+          (click)="goToPage(page)"
+          class="w-8 h-8 rounded-lg text-xs font-semibold transition-colors"
+          [class.bg-purple-600]="page === currentPage"
+          [class.text-white]="page === currentPage"
+          [class.text-slate-700]="page !== currentPage"
+          [class.hover:bg-slate-100]="page !== currentPage">
+          {{ page }}
+        </button>
+      }
+
+      <button
+        type="button"
+        (click)="next()"
+        [disabled]="currentPage >= totalPages"
+        class="p-2 text-slate-500 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-40 disabled:hover:bg-transparent rounded-lg transition-colors"
+        aria-label="Next page">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+        </svg>
+      </button>
+    </div>
+  </div>
+}

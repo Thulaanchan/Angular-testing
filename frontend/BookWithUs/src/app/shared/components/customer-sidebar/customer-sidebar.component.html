@@ -1,0 +1,114 @@
+<aside class="w-64 bg-white border-r border-slate-200 flex flex-col justify-between shrink-0 min-h-screen">
+  <div>
+    <!-- Logo & Brand Header -->
+    <div class="h-16 flex items-center px-6 border-b border-slate-100 gap-3">
+      <div class="w-9 h-9 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-sm shadow-brand-200">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <span class="text-xl font-bold tracking-tight text-slate-900 font-sans">
+        Book<span class="text-brand-600">WithUs</span>
+      </span>
+    </div>
+
+    <!-- User Profile Header in Sidebar (as seen in screens 14, 16, 17, 18) -->
+    <div class="p-4 border-b border-slate-100">
+      <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-50 border border-slate-100">
+        <div class="w-10 h-10 rounded-full bg-brand-100 text-brand-700 font-bold text-sm flex items-center justify-center shrink-0">
+          {{ userInitials }}
+        </div>
+        <div class="min-w-0 flex-1">
+          <p class="text-sm font-bold text-slate-900 truncate">{{ authService.currentUserValue?.fullName || authService.currentUserValue?.displayName || 'Leo Thas' }}</p>
+          <p class="text-xs text-slate-500 truncate">{{ authService.currentUserValue?.email || 'leonthas@email.com' }}</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation List -->
+    <nav class="p-4 space-y-1">
+      <a routerLink="/customer/dashboard" 
+         routerLinkActive="bg-brand-600 text-white shadow-md shadow-brand-200 font-semibold"
+         [routerLinkActiveOptions]="{ exact: true }"
+         class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+        </svg>
+        Dashboard
+      </a>
+
+      <a routerLink="/events" 
+         routerLinkActive="bg-brand-600 text-white shadow-md shadow-brand-200 font-semibold"
+         class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+        </svg>
+        Browse Events
+      </a>
+
+      <a routerLink="/customer/bookings" 
+         routerLinkActive="bg-brand-600 text-white shadow-md shadow-brand-200 font-semibold"
+         class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"/>
+        </svg>
+        My Bookings
+      </a>
+
+      <a routerLink="/customer/notifications" 
+         routerLinkActive="bg-brand-600 text-white shadow-md shadow-brand-200 font-semibold"
+         class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+        </svg>
+        Notifications
+      </a>
+
+      <a routerLink="/customer/profile" 
+         routerLinkActive="bg-brand-600 text-white shadow-md shadow-brand-200 font-semibold"
+         class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+        </svg>
+        Profile
+      </a>
+
+      <a routerLink="/customer/payments" 
+         routerLinkActive="bg-brand-600 text-white shadow-md shadow-brand-200 font-semibold"
+         class="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/>
+        </svg>
+        Payment History
+      </a>
+
+      <div class="pt-3">
+        <button (click)="logout()" 
+                class="w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-600 hover:bg-rose-50 hover:text-rose-600 transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+          </svg>
+          Logout
+        </button>
+      </div>
+    </nav>
+  </div>
+
+  <!-- Bottom Support Card -->
+  <div class="p-4">
+    <div class="bg-brand-50/70 border border-brand-100 rounded-2xl p-4">
+      <div class="flex items-center gap-3 mb-2">
+        <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-600 flex items-center justify-center shrink-0">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+        </div>
+        <p class="text-xs font-bold text-slate-900">Need Help?</p>
+      </div>
+      <p class="text-[11px] text-slate-500 mb-3 leading-relaxed">We're here to help with any booking related inquiries.</p>
+      <button type="button" class="w-full py-1.5 px-3 border border-brand-300 rounded-xl text-xs font-semibold text-brand-700 bg-white hover:bg-brand-50 transition">
+        Contact Support
+      </button>
+    </div>
+  </div>
+</aside>

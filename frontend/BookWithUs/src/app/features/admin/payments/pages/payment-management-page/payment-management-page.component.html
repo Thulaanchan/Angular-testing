@@ -1,0 +1,148 @@
+<div class="space-y-6">
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Payment Transactions</h1>
+      <p class="text-xs text-slate-500 mt-1">Audit customer remittances, card settlements, and simulated payments</p>
+    </div>
+  </div>
+
+  <!-- Disclaimer (AS-09) -->
+  <app-alert-banner
+    type="info"
+    title="Simulation Environment Notice"
+    message="All payment records are processed through the BookWithUs virtual payment simulator for demonstration. Real cards are neither charged nor debited."></app-alert-banner>
+
+  <!-- Filter & Search Bar -->
+  <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <div class="flex items-center gap-1.5">
+      <button
+        type="button"
+        (click)="statusFilter = 'all'; filter()"
+        class="px-3 py-1.5 rounded-xl text-xs font-semibold"
+        [class.bg-purple-600]="statusFilter === 'all'"
+        [class.text-white]="statusFilter === 'all'"
+        [class.bg-slate-100]="statusFilter !== 'all'"
+        [class.text-slate-700]="statusFilter !== 'all'">
+        All ({{ payments.length }})
+      </button>
+      <button
+        type="button"
+        (click)="statusFilter = 'completed'; filter()"
+        class="px-3 py-1.5 rounded-xl text-xs font-semibold"
+        [class.bg-purple-600]="statusFilter === 'completed'"
+        [class.text-white]="statusFilter === 'completed'"
+        [class.bg-slate-100]="statusFilter !== 'completed'"
+        [class.text-slate-700]="statusFilter !== 'completed'">
+        Completed
+      </button>
+      <button
+        type="button"
+        (click)="statusFilter = 'pending'; filter()"
+        class="px-3 py-1.5 rounded-xl text-xs font-semibold"
+        [class.bg-purple-600]="statusFilter === 'pending'"
+        [class.text-white]="statusFilter === 'pending'"
+        [class.bg-slate-100]="statusFilter !== 'pending'"
+        [class.text-slate-700]="statusFilter !== 'pending'">
+        Pending
+      </button>
+    </div>
+
+    <div class="relative w-full md:w-72">
+      <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (ngModelChange)="filter()"
+        placeholder="Search ref, event, customer..."
+        class="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20" />
+    </div>
+  </div>
+
+  <!-- Payments Table (AS-09) -->
+  @if (isLoading) {
+    <div class="py-20">
+      <app-loading-spinner message="Loading transactions..."></app-loading-spinner>
+    </div>
+  } @else if (filteredPayments.length === 0) {
+    <app-empty-state title="No payments found" description="No transactions match your search filter." icon="ticket"></app-empty-state>
+  } @else {
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-slate-50 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider">
+            <tr>
+              <th class="py-3.5 px-4">Transaction ID</th>
+              <th class="py-3.5 px-4">Booking Ref</th>
+              <th class="py-3.5 px-4">Customer</th>
+              <th class="py-3.5 px-4">Event</th>
+              <th class="py-3.5 px-4">Date</th>
+              <th class="py-3.5 px-4 text-right">Amount</th>
+              <th class="py-3.5 px-4 text-center">Status</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (p of filteredPayments; track p.paymentId) {
+              <tr class="hover:bg-slate-50/50 transition cursor-pointer" (click)="viewDetails(p)">
+                <td class="py-3.5 px-4 font-mono font-bold text-slate-700">TXN-{{ p.paymentId }}</td>
+                <td class="py-3.5 px-4 font-mono text-purple-700 font-semibold">{{ p.bookingNumber }}</td>
+                <td class="py-3.5 px-4 font-medium text-slate-900">{{ p.customerName || 'Leon Thas' }}</td>
+                <td class="py-3.5 px-4 text-slate-600 max-w-xs truncate">{{ p.eventName }}</td>
+                <td class="py-3.5 px-4 text-slate-500">{{ p.paidAtUtc | date:'medium' }}</td>
+                <td class="py-3.5 px-4 text-right font-black text-slate-900">${{ p.amountPaid | number:'1.2-2' }}</td>
+                <td class="py-3.5 px-4 text-center">
+                  <app-status-badge [status]="p.paymentStatus" size="xs"></app-status-badge>
+                </td>
+                <td class="py-3.5 px-4 text-right" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    (click)="viewDetails(p)"
+                    class="px-2.5 py-1 text-xs font-semibold text-purple-600 hover:bg-purple-50 rounded-lg transition">
+                    Details
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- Payment Details Modal (AS-09 drawer) -->
+  <app-modal
+    [isOpen]="showDetailsModal"
+    [title]="'Transaction TXN-' + (selectedPayment?.paymentId || '')"
+    subtitle="Simulated Payment Audit Information"
+    size="md"
+    (close)="showDetailsModal = false">
+    @if (selectedPayment) {
+      <div class="space-y-4 text-xs">
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 flex justify-between items-center">
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase">Booking Reference</span>
+            <span class="font-mono font-bold text-purple-700 text-sm">{{ selectedPayment.bookingNumber }}</span>
+          </div>
+          <app-status-badge [status]="selectedPayment.paymentStatus" size="xs"></app-status-badge>
+        </div>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-1">
+          <span class="text-slate-400 block text-[10px] uppercase">Event & Customer</span>
+          <p class="font-bold text-slate-900">{{ selectedPayment.eventName }}</p>
+          <p class="text-slate-600">{{ selectedPayment.venueName }}</p>
+          <p class="text-slate-500">Customer: {{ selectedPayment.customerName || 'Leon Thas' }}</p>
+        </div>
+
+        <div class="flex justify-between items-baseline pt-2 border-t border-slate-100">
+          <span class="text-slate-600">Settled Amount:</span>
+          <span class="text-xl font-black text-purple-700">${{ selectedPayment.amountPaid | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    }
+
+    <div modal-footer>
+      <button (click)="showDetailsModal = false" class="px-4 py-2 bg-slate-100 text-slate-700 text-xs font-semibold rounded-xl">Close</button>
+    </div>
+  </app-modal>
+</div>

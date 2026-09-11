@@ -1,0 +1,41 @@
+<div class="w-full py-4">
+  <div class="flex items-center justify-center max-w-2xl mx-auto">
+    @for (step of steps; track step.id; let isLast = $last) {
+      <div class="flex items-center" [class.flex-1]="!isLast">
+        <div class="flex items-center gap-2.5">
+          <!-- Step indicator circle -->
+          <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all shadow-sm"
+               [ngClass]="{
+                 'bg-brand-600 text-white shadow-brand-200': step.id === currentStep,
+                 'bg-emerald-600 text-white shadow-emerald-100': step.id < currentStep,
+                 'bg-slate-100 text-slate-500 border border-slate-200': step.id > currentStep
+               }">
+            @if (step.id < currentStep) {
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+            } @else {
+              {{ step.id }}
+            }
+          </div>
+          <!-- Step Label -->
+          <span class="text-xs sm:text-sm font-semibold whitespace-nowrap"
+                [ngClass]="{
+                  'text-brand-600': step.id === currentStep,
+                  'text-emerald-700': step.id < currentStep,
+                  'text-slate-500': step.id > currentStep
+                }">
+            {{ step.label }}
+          </span>
+        </div>
+
+        <!-- Connector line -->
+        @if (!isLast) {
+          <div class="flex-1 mx-3 sm:mx-6 h-0.5 rounded transition-all"
+               [ngClass]="step.id < currentStep ? 'bg-emerald-500' : 'bg-slate-200'">
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,215 @@
+<div class="space-y-6">
+  <!-- Page Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900 tracking-tight">Customer Management</h1>
+      <p class="text-xs text-slate-500 mt-1">Search, inspect customer accounts, booking history, and manage access</p>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="onFilterChange('all')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition"
+        [class.bg-purple-600]="statusFilter === 'all'"
+        [class.text-white]="statusFilter === 'all'"
+        [class.bg-slate-100]="statusFilter !== 'all'"
+        [class.text-slate-700]="statusFilter !== 'all'">
+        All Customers ({{ totalCount }})
+      </button>
+      <button
+        type="button"
+        (click)="onFilterChange('active')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition"
+        [class.bg-purple-600]="statusFilter === 'active'"
+        [class.text-white]="statusFilter === 'active'"
+        [class.bg-slate-100]="statusFilter !== 'active'"
+        [class.text-slate-700]="statusFilter !== 'active'">
+        Active
+      </button>
+      <button
+        type="button"
+        (click)="onFilterChange('inactive')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-semibold transition"
+        [class.bg-purple-600]="statusFilter === 'inactive'"
+        [class.text-white]="statusFilter === 'inactive'"
+        [class.bg-slate-100]="statusFilter !== 'inactive'"
+        [class.text-slate-700]="statusFilter !== 'inactive'">
+        Inactive
+      </button>
+    </div>
+
+    <!-- Search Input -->
+    <div class="relative w-full md:w-80">
+      <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Search by name, email, phone..."
+        class="w-full pl-9 pr-4 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-600" />
+    </div>
+  </div>
+
+  <!-- Customers Table (AS-02) -->
+  @if (isLoading) {
+    <div class="py-20">
+      <app-loading-spinner message="Loading customer directory..."></app-loading-spinner>
+    </div>
+  } @else if (customers.length === 0) {
+    <app-empty-state
+      title="No customers found"
+      description="No customer accounts match your search filter."
+      icon="users"></app-empty-state>
+  } @else {
+    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-slate-50 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider">
+            <tr>
+              <th class="py-3.5 px-4">Customer</th>
+              <th class="py-3.5 px-4">Contact</th>
+              <th class="py-3.5 px-4">Joined Date</th>
+              <th class="py-3.5 px-4 text-center">Bookings</th>
+              <th class="py-3.5 px-4 text-center">Status</th>
+              <th class="py-3.5 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            @for (cust of customers; track cust.customerId) {
+              <tr class="hover:bg-slate-50/50 transition cursor-pointer" (click)="viewCustomerDetails(cust)">
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-700 font-bold text-xs flex items-center justify-center shrink-0">
+                      {{ (cust.fullName || 'CU').substring(0, 2).toUpperCase() }}
+                    </div>
+                    <div>
+                      <span class="font-bold text-slate-900 block">{{ cust.fullName }}</span>
+                      <span class="text-[11px] text-slate-400">ID: #CUST-{{ cust.customerId }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4 text-slate-600">
+                  <span class="block">{{ cust.email }}</span>
+                  <span class="text-[11px] text-slate-400">{{ cust.phoneNumber }}</span>
+                </td>
+                <td class="py-3.5 px-4 text-slate-500">{{ cust.registeredDate | date:'mediumDate' }}</td>
+                <td class="py-3.5 px-4 text-center">
+                  <span class="px-2.5 py-1 rounded-full text-xs font-bold bg-slate-100 text-slate-700">
+                    {{ cust.totalBookings }}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-center">
+                  <app-status-badge [status]="cust.status" size="xs"></app-status-badge>
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <div class="flex items-center justify-end gap-2" (click)="$event.stopPropagation()">
+                    <button
+                      type="button"
+                      (click)="viewCustomerDetails(cust)"
+                      class="px-2.5 py-1 text-xs font-semibold text-purple-600 hover:bg-purple-50 rounded-lg transition">
+                      Details
+                    </button>
+                    @if (cust.status === 'Active') {
+                      <button
+                        type="button"
+                        (click)="openDeactivateDialog(cust, $event)"
+                        class="px-2 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-lg transition">
+                        Deactivate
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [totalCount]="totalCount"
+        [pageSize]="pageSize"
+        (pageChange)="onPageChange($event)"></app-pagination>
+    </div>
+  }
+
+  <!-- Customer Details Modal / Slide-over Drawer (AS-02) -->
+  <app-modal
+    [isOpen]="showDetailsModal"
+    [title]="selectedCustomer?.fullName || 'Customer Profile'"
+    subtitle="Customer Account & Reservation History"
+    size="lg"
+    (close)="showDetailsModal = false">
+    @if (selectedCustomer) {
+      <div class="space-y-6 text-xs">
+        <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-2xl border border-slate-200">
+          <div class="w-14 h-14 rounded-2xl bg-purple-600 text-white font-black text-lg flex items-center justify-center">
+            {{ (selectedCustomer.fullName || 'CU').substring(0, 2).toUpperCase() }}
+          </div>
+          <div class="flex-1">
+            <h3 class="text-base font-bold text-slate-900">{{ selectedCustomer.fullName }}</h3>
+            <p class="text-slate-500">{{ selectedCustomer.email }} &bull; {{ selectedCustomer.phoneNumber }}</p>
+            <div class="mt-2 flex items-center gap-2">
+              <app-status-badge [status]="selectedCustomer.status" size="xs"></app-status-badge>
+              <span class="text-slate-400">Registered on {{ selectedCustomer.registeredDate | date:'fullDate' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl border border-slate-200">
+            <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Total Reservations</span>
+            <span class="text-2xl font-black text-slate-900 mt-1 block">{{ selectedCustomer.totalBookings }} Bookings</span>
+          </div>
+          <div class="p-4 rounded-xl border border-slate-200">
+            <span class="text-slate-400 block uppercase tracking-wider text-[10px]">Account Health</span>
+            <span class="text-2xl font-black text-emerald-600 mt-1 block">Good Standing</span>
+          </div>
+        </div>
+
+        <div class="p-4 bg-purple-50/50 rounded-xl border border-purple-100 text-slate-600 space-y-1.5">
+          <h4 class="font-bold text-slate-900">Account Notes</h4>
+          <p>Customer has verified email and phone credentials. Eligible for priority booking allocations and pre-sale access.</p>
+        </div>
+      </div>
+    }
+
+    <div modal-footer class="flex items-center justify-between w-full">
+      @if (selectedCustomer?.status === 'Active') {
+        <button
+          type="button"
+          (click)="showDetailsModal = false; showDeactivateDialog = true"
+          class="px-4 py-2 bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs rounded-xl border border-rose-200 transition">
+          Deactivate Account
+        </button>
+      } @else {
+        <span></span>
+      }
+      <button
+        type="button"
+        (click)="showDetailsModal = false"
+        class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs rounded-xl transition">
+        Close
+      </button>
+    </div>
+  </app-modal>
+
+  <!-- Deactivate Safeguard Confirmation Dialog -->
+  <app-confirmation-dialog
+    [isOpen]="showDeactivateDialog"
+    title="Deactivate Customer Account?"
+    [message]="'Are you sure you want to deactivate customer ' + (selectedCustomer?.fullName || '') + '? The customer will be unable to log in or book new events until reactivated.'"
+    confirmText="Yes, Deactivate"
+    cancelText="Keep Active"
+    type="danger"
+    [isLoading]="isDeactivating"
+    (confirm)="confirmDeactivate()"
+    (cancel)="showDeactivateDialog = false"></app-confirmation-dialog>
+</div>

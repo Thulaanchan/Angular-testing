@@ -1,0 +1,139 @@
+@if (bookingState.state$ | async; as bs) {
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 sticky top-24">
+    <h3 class="text-lg font-bold text-slate-900 border-b border-slate-100 pb-4 mb-4">
+      Booking Summary
+    </h3>
+
+    @if (bs.event) {
+      <div class="mb-5 pb-5 border-b border-slate-100">
+        <h4 class="font-bold text-slate-900 text-base line-clamp-1">{{ bs.event.title }}</h4>
+        <div class="mt-2 space-y-1 text-xs text-slate-500">
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <span>{{ bs.event.eventDate | date:'fullDate' }} • {{ bs.event.eventDate | date:'shortTime' }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <svg class="w-4 h-4 text-purple-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+            </svg>
+            <span>{{ bs.event.venueName }}, {{ bs.event.venueLocation || bs.event.venueCity }}</span>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Seats Selected -->
+    <div class="mb-5 pb-5 border-b border-slate-100">
+      <div class="flex items-center justify-between text-sm mb-3">
+        <span class="font-semibold text-slate-800">Selected Seats</span>
+        <span class="text-xs bg-purple-100 text-purple-700 font-semibold px-2 py-0.5 rounded-full">
+          {{ bs.selectedSeats.length }} / {{ bs.adultCount + bs.childCount }} seats
+        </span>
+      </div>
+
+      @if (bs.selectedSeats.length === 0) {
+        <p class="text-xs text-slate-400 italic">No seats selected yet</p>
+      } @else {
+        <div class="flex flex-wrap gap-1.5 mb-3">
+          @for (seat of bs.selectedSeats; track seat.seatId) {
+            <span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-lg font-medium border"
+              [class.bg-purple-50]="seat.attendeeType === AttendeeType.Adult"
+              [class.border-purple-200]="seat.attendeeType === AttendeeType.Adult"
+              [class.text-purple-700]="seat.attendeeType === AttendeeType.Adult"
+              [class.bg-amber-50]="seat.attendeeType === AttendeeType.Child"
+              [class.border-amber-200]="seat.attendeeType === AttendeeType.Child"
+              [class.text-amber-700]="seat.attendeeType === AttendeeType.Child">
+              {{ seat.seatCode }}
+              <span class="text-[10px] opacity-75">({{ seat.attendeeType === AttendeeType.Child ? 'Child' : 'Adult' }})</span>
+            </span>
+          }
+        </div>
+
+        <div class="space-y-1.5 text-xs text-slate-600">
+          @if (adultSeats.length > 0) {
+            <div class="flex justify-between">
+              <span>Adult Seats ({{ adultSeats.length }}x)</span>
+              <span class="font-medium text-slate-900">${{ adultSeats[0].originalPrice * adultSeats.length | number:'1.2-2' }}</span>
+            </div>
+          }
+          @if (childSeats.length > 0) {
+            <div class="flex justify-between text-amber-700">
+              <span>Child Seats (50% off) ({{ childSeats.length }}x)</span>
+              <span class="font-medium">${{ childSeats[0].price * childSeats.length | number:'1.2-2' }}</span>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- Parking Selection -->
+    <div class="mb-5 pb-5 border-b border-slate-100">
+      <div class="flex items-center justify-between text-sm mb-2">
+        <span class="font-semibold text-slate-800">Parking Space</span>
+        @if (bs.selectedParking) {
+          <span class="text-xs bg-emerald-100 text-emerald-700 font-semibold px-2 py-0.5 rounded-full">
+            Selected
+          </span>
+        } @else {
+          <span class="text-xs text-slate-400">None</span>
+        }
+      </div>
+
+      @if (bs.selectedParking; as p) {
+        <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex items-center justify-between text-xs">
+          <div>
+            <div class="font-semibold text-slate-800">Slot {{ p.slotCode }} (Zone {{ p.zoneName }})</div>
+            <div class="text-slate-500 text-[11px] capitalize">{{ p.vehicleType }} Vehicle</div>
+          </div>
+          <span class="font-bold text-slate-900">${{ p.fee | number:'1.2-2' }}</span>
+        </div>
+      } @else {
+        <p class="text-xs text-slate-400 italic">No parking space selected</p>
+      }
+    </div>
+
+    <!-- Pricing Summary -->
+    <div class="space-y-2 mb-6">
+      <div class="flex justify-between text-sm text-slate-600">
+        <span>Tickets Subtotal</span>
+        <span class="font-medium text-slate-900">${{ bookingState.subtotalSeats | number:'1.2-2' }}</span>
+      </div>
+      <div class="flex justify-between text-sm text-slate-600">
+        <span>Parking Fee</span>
+        <span class="font-medium text-slate-900">${{ bookingState.parkingFee | number:'1.2-2' }}</span>
+      </div>
+      <div class="flex justify-between text-sm text-slate-600">
+        <span>Service & Booking Fee</span>
+        <span class="font-medium text-emerald-600">Free</span>
+      </div>
+      <div class="pt-3 border-t border-slate-100 flex justify-between items-baseline">
+        <span class="text-base font-bold text-slate-900">Total</span>
+        <span class="text-2xl font-black text-purple-600">${{ bookingState.totalAmount | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    @if (showAction) {
+      <button
+        type="button"
+        (click)="onProceed()"
+        [disabled]="!canProceed || isLoading"
+        class="w-full py-3.5 px-4 bg-purple-600 hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold rounded-xl shadow-md shadow-purple-200 transition-all flex items-center justify-center gap-2">
+        @if (isLoading) {
+          <svg class="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <span>Processing...</span>
+        } @else {
+          <span>{{ actionLabel }}</span>
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+          </svg>
+        }
+      </button>
+    }
+  </div>
+}

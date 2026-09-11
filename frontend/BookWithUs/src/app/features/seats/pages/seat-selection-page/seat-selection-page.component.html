@@ -1,0 +1,172 @@
+<div class="space-y-6">
+  <!-- Stepper Header -->
+  <app-booking-stepper [currentStep]="1"></app-booking-stepper>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left 2 Cols: Arena Seat Map & Ticket Counters -->
+    <div class="lg:col-span-2 space-y-6">
+      <!-- Ticket Requirement Counters & Instructions -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 class="text-base font-bold text-slate-900">Select Arena Seats</h2>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Please pick exactly {{ bookingState.totalSeatsRequired }} seats for your party ({{ bookingState.currentState.adultCount }} Adults, {{ bookingState.currentState.childCount }} Children).
+          </p>
+        </div>
+
+        <div class="flex items-center gap-4">
+          <!-- Adult counter -->
+          <div class="flex items-center gap-2 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+            <span class="text-xs font-semibold text-slate-700">Adult:</span>
+            <button (click)="decrementAdults()" [disabled]="bookingState.currentState.adultCount <= 1" class="w-6 h-6 rounded bg-white border border-slate-300 text-xs font-bold hover:bg-slate-100 disabled:opacity-40">-</button>
+            <span class="w-4 text-center text-xs font-bold">{{ bookingState.currentState.adultCount }}</span>
+            <button (click)="incrementAdults()" class="w-6 h-6 rounded bg-white border border-slate-300 text-xs font-bold hover:bg-slate-100">+</button>
+          </div>
+
+          <!-- Child counter -->
+          <div class="flex items-center gap-2 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200">
+            <span class="text-xs font-semibold text-amber-900">Child:</span>
+            <button (click)="decrementChildren()" [disabled]="bookingState.currentState.childCount <= 0" class="w-6 h-6 rounded bg-white border border-amber-300 text-xs font-bold hover:bg-amber-100 disabled:opacity-40">-</button>
+            <span class="w-4 text-center text-xs font-bold text-amber-900">{{ bookingState.currentState.childCount }}</span>
+            <button (click)="incrementChildren()" class="w-6 h-6 rounded bg-white border border-amber-300 text-xs font-bold hover:bg-amber-100">+</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Legend & Zoom Toolbar -->
+      <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-xs flex flex-wrap items-center justify-between gap-4">
+        <div class="flex flex-wrap items-center gap-4 text-xs font-medium text-slate-600">
+          <div class="flex items-center gap-1.5">
+            <span class="w-4 h-4 rounded-md bg-slate-100 border border-slate-300"></span>
+            <span>Available</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-4 h-4 rounded-md bg-purple-600 border border-purple-700 shadow-xs"></span>
+            <span class="font-bold text-purple-700">Selected</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-4 h-4 rounded-md bg-amber-200 border border-amber-400"></span>
+            <span>Held (15m)</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-4 h-4 rounded-md bg-slate-300 border border-slate-400 opacity-60"></span>
+            <span class="text-slate-400">Occupied</span>
+          </div>
+          <div class="h-4 w-px bg-slate-200 hidden sm:block"></div>
+          <div class="flex items-center gap-2 text-[11px]">
+            <span class="px-2 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200 font-semibold">VIP $250</span>
+            <span class="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200 font-semibold">Plat $180</span>
+            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-200 font-semibold">Gold $120</span>
+            <span class="px-2 py-0.5 rounded bg-slate-50 text-slate-700 border border-slate-200 font-semibold">Silver $85</span>
+          </div>
+        </div>
+
+        <!-- Zoom Controls -->
+        <div class="flex items-center gap-1">
+          <button (click)="zoomOut()" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition" title="Zoom Out">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" /></svg>
+          </button>
+          <button (click)="resetZoom()" class="px-2 py-1 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition" title="Reset Zoom">
+            {{ (zoomLevel * 100) | number:'1.0-0' }}%
+          </button>
+          <button (click)="zoomIn()" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 transition" title="Zoom In">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Arena Layout Container -->
+      <div class="bg-slate-900 rounded-3xl p-6 shadow-xl border border-slate-800 overflow-x-auto min-h-[480px] flex flex-col items-center justify-start text-white">
+        <!-- Stage Visual -->
+        <div class="w-full max-w-xl mb-8">
+          <div class="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-600 text-white py-2.5 px-6 rounded-2xl text-center shadow-lg shadow-purple-900/50 border border-purple-400/40">
+            <span class="text-xs font-black uppercase tracking-widest">STAGE &bull; PERFORMANCE AREA</span>
+          </div>
+          <div class="w-3/4 h-2 bg-purple-500/30 rounded-full mx-auto mt-2 blur-xs"></div>
+        </div>
+
+        @if (isLoading) {
+          <div class="py-20">
+            <app-loading-spinner message="Loading arena seating layout..." color="text-purple-400"></app-loading-spinner>
+          </div>
+        } @else {
+          <!-- Scalable Seating Grid -->
+          <div
+            class="space-y-6 transition-transform duration-200 origin-top pb-6 w-full flex flex-col items-center"
+            [style.transform]="'scale(' + zoomLevel + ')'">
+
+            @for (sec of sections; track sec.name) {
+              <div class="w-full max-w-2xl bg-slate-800/60 rounded-2xl p-4 border border-slate-700/60">
+                <div class="flex items-center justify-between mb-3 text-xs">
+                  <span class="font-bold text-slate-200">{{ sec.name }} ({{ sec.tier }} Tier)</span>
+                  <span class="text-slate-400">Available: {{ sec.seats.length }}</span>
+                </div>
+
+                <!-- Seat Grid -->
+                <div class="flex flex-wrap gap-2 justify-center">
+                  @for (seat of sec.seats; track seat.seatId || seat.id) {
+                    <button
+                      type="button"
+                      (click)="onSeatClick(seat)"
+                      (mouseenter)="hoveredSeat = seat"
+                      (mouseleave)="hoveredSeat = null"
+                      [disabled]="seat.status !== 'Available'"
+                      class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg text-[10px] font-bold transition-all duration-150 flex items-center justify-center relative cursor-pointer"
+                      [class.bg-purple-600]="isSeatSelected(seat.seatId || seat.id)"
+                      [class.text-white]="isSeatSelected(seat.seatId || seat.id)"
+                      [class.ring-2]="isSeatSelected(seat.seatId || seat.id)"
+                      [class.ring-purple-300]="isSeatSelected(seat.seatId || seat.id)"
+                      [class.scale-110]="isSeatSelected(seat.seatId || seat.id)"
+                      [class.bg-slate-700]="!isSeatSelected(seat.seatId || seat.id) && seat.status === 'Available'"
+                      [class.text-slate-200]="!isSeatSelected(seat.seatId || seat.id) && seat.status === 'Available'"
+                      [class.hover:bg-purple-500]="!isSeatSelected(seat.seatId || seat.id) && seat.status === 'Available'"
+                      [class.hover:text-white]="!isSeatSelected(seat.seatId || seat.id) && seat.status === 'Available'"
+                      [class.bg-amber-500/40]="seat.status === 'Held'"
+                      [class.text-amber-200]="seat.status === 'Held'"
+                      [class.cursor-not-allowed]="seat.status !== 'Available'"
+                      [class.bg-slate-800]="seat.status === 'Occupied' || seat.status === 'Booked'"
+                      [class.text-slate-600]="seat.status === 'Occupied' || seat.status === 'Booked'"
+                      [class.opacity-40]="seat.status === 'Occupied' || seat.status === 'Booked'">
+                      {{ seat.seatNumber || seat.number }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <!-- Hover Tooltip Bar -->
+          <div class="h-6 mt-2 text-xs text-slate-400">
+            @if (hoveredSeat) {
+              <span class="font-mono text-purple-300 font-bold">Seat {{ hoveredSeat.seatCode }}</span> &bull;
+              <span>{{ hoveredSeat.sectionName }} (Row {{ hoveredSeat.rowLabel }})</span> &bull;
+              <span>${{ hoveredSeat.price || hoveredSeat.adultPrice | number:'1.2-2' }}</span> &bull;
+              <span class="capitalize" [class.text-emerald-400]="hoveredSeat.status === 'Available'">{{ hoveredSeat.status }}</span>
+            } @else {
+              <span>Hover over a seat for details &bull; Click to select/deselect</span>
+            }
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Right 1 Col: Live Booking Summary -->
+    <div>
+      <app-live-booking-summary
+        actionLabel="Continue to Parking"
+        [canProceed]="canProceed"
+        (proceed)="proceedToParking()"></app-live-booking-summary>
+    </div>
+  </div>
+
+  <!-- 409 Conflict Dialog -->
+  <app-confirmation-dialog
+    [isOpen]="showConflictDialog"
+    title="Seat Selection Conflict (409)"
+    [message]="conflictMessage || 'Some of your chosen seats were recently reserved by another guest. Please select alternative seats.'"
+    confirmText="Refresh Available Seats"
+    cancelText="Dismiss"
+    type="warning"
+    (confirm)="showConflictDialog = false; loadSeats(bookingState.currentState.event?.eventId || bookingState.currentState.event?.id || 1)"
+    (cancel)="showConflictDialog = false"></app-confirmation-dialog>
+</div>

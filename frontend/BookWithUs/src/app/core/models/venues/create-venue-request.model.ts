@@ -1,0 +1,7 @@
+export interface CreateVenueRequest {
+  name: string;
+  address: string;
+  totalCapacity: number;
+}
+
+export type CreateVenueDto = CreateVenueRequest;
